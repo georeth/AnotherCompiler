@@ -1,0 +1,6 @@
+program a()
+is 
+    var p is a;
+begin
+    
+end

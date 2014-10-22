@@ -1,0 +1,10 @@
+program example()
+  type line is array of 10 integer;
+  // 使用二维数组
+  type grid is array of 10 line;
+is
+  var p is a;
+  var q is b;
+// 主程序
+begin
+end

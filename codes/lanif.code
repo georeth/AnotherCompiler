@@ -1,0 +1,5 @@
+program example()
+is
+begin
+  0 > 0 and 0;
+end

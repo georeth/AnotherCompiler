@@ -1,0 +1,8 @@
+program example()
+  // 一个判断 n 是否为奇数的函数
+is
+  var p is a;
+  var q is b;
+// 主程序
+begin
+end

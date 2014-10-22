@@ -1,0 +1,13 @@
+program example()
+  function isodd(n)
+    //var n is integer;
+    //return boolean;
+  is
+  begin
+  end function isodd;
+is
+  var p is a;
+  var q is b;
+// 主程序
+begin
+end
