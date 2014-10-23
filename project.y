@@ -19,7 +19,7 @@ int main()
 %token L_NUMBER L_YES L_NO/* literal */
 %token IDENT
 %token P_SIMI P_DOT P_COMMA P_L_PARA P_R_PARA P_EQ P_LT P_LE P_GT P_GE P_NE P_ASSIGN P_L_BRACKET P_R_BRACKET P_ADD P_SUB P_MUL P_DIV P_MOD/* PUNCTURATIONS */
-
+%token __DEBUG__
 %% 
 
 program:
@@ -56,10 +56,12 @@ type_def:
     class_def | array_def;
 array_def:
     K_TYPE IDENT K_IS K_ARRAY K_OF L_NUMBER IDENT P_SIMI;
+
 class_def:
     K_TYPE IDENT K_IS K_CLASS extends_opt
         member_defs
     K_END K_CLASS P_SIMI;
+
 extends_opt:
            |
            K_EXTENDS IDENT;
@@ -77,6 +79,7 @@ variable_def: K_VAR IDENT K_IS IDENT P_SIMI;
 
 argument_list: /* (a, b, c) */
     P_L_PARA arguments_opt P_R_PARA;
+
 arguments_opt:
              | 
              arguments;
@@ -84,43 +87,46 @@ arguments_opt:
 arguments: 
          IDENT 
          |
-         IDENT P_COMMA IDENT;
+         arguments P_COMMA IDENT;
+
+rel_op:
+      P_LT | P_LE | P_EQ | P_NE | P_GT | P_GE;
 
 expr: 
-         bool_term {printf("1EXPR\n");}
+         bool_term 
          | 
          expr K_OR bool_term;
 bool_term:
          bool_factor
-      {printf("BOOL\n");}
          |
-         bool_term {printf("ABC\n");} K_AND {printf("AND\n");} bool_factor;
+         bool_term K_AND bool_factor;
 
 bool_factor:
-           bool_atom {printf("FACTOR\n");} | K_NOT bool_factor;
+           bool_atom | K_NOT bool_factor;
 bool_atom:
          L_YES
          |
          L_NO
          | 
          arith_expr
-      {printf("ATOM\n");}
          |
          arith_expr rel_op arith_expr;
 
 
 arith_expr:
+    arith_term_signed
+    |
+    arith_expr P_ADD arith_term_signed
+    |
+    arith_expr P_SUB arith_term_signed;
+
+arith_term_signed:
     arith_term
-      {printf("ARITH_EXPR\n");}
+    | 
+    P_ADD arith_term_signed
     |
-    arith_expr P_ADD arith_term
-    |
-    arith_expr P_SUB arith_term;
+    P_SUB arith_term_signed;
 arith_term:
-    P_ADD arith_term
-    |
-    P_SUB arith_term
-    |
     arith_factor
     |
     arith_term P_MUL arith_factor
@@ -130,39 +136,34 @@ arith_term:
     arith_term P_MOD arith_factor;
 
 arith_factor:
+    arith_atom
+    |
+    arith_factor P_DOT IDENT  /* field */
+    | 
+    arith_factor P_DOT IDENT pass_value_list /* method */
+    | 
+    arith_factor P_L_BRACKET expr P_R_BRACKET; /* array */
+    
+arith_atom:
       L_NUMBER 
       | 
-      lvalue /*HACK*/
-      |
       P_L_PARA expr P_R_PARA
       |
-      function_call
+      IDENT pass_value_list /* function_call */
+      |
+      IDENT                 /* variable */
       ;
 
-function_call:
-      expr P_L_PARA pass_value_list P_R_PARA;
-
 pass_value_list:
-      |
-      pass_values;
+      P_L_PARA pass_values_opt P_R_PARA; 
 
+pass_values_opt:
+               | pass_values;
 pass_values:
-      expr
-      |
-      pass_values P_COMMA expr;
+           expr
+           |  
+           expr P_COMMA pass_values;
 
-lvalue:
-      IDENT {printf("ID\n");}
-      |
-      arith_factor subscript
-      |
-      arith_factor P_DOT IDENT;
-
-subscript:
-         P_L_BRACKET expr P_R_BRACKET;
-
-rel_op:
-      P_LT | P_LE | P_EQ | P_NE | P_GT | P_GE;
 
 statements: 
          |
@@ -185,7 +186,7 @@ statement:
          expr P_SIMI; /* f() */
 
 assign_stat: 
-        lvalue P_ASSIGN expr P_SIMI;
+        expr P_ASSIGN expr P_SIMI;
 if_stat:
        K_IF expr K_THEN
             statements

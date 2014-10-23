@@ -4,6 +4,10 @@
 %}
 
 %%
+ 
+
+"__debug__"            return __DEBUG__;
+
 program      return K_PROGRAM;
 function      return K_FUNCTION;
 type      return K_TYPE;
@@ -59,4 +63,5 @@ no                      return L_NO;
 "*"                    return P_MUL;
 "/"                    return P_DIV;
 "%"                    return P_MOD;
+
 %%

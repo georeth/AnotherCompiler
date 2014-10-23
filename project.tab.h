@@ -93,7 +93,8 @@ extern int yydebug;
     P_SUB = 303,
     P_MUL = 304,
     P_DIV = 305,
-    P_MOD = 306
+    P_MOD = 306,
+    __DEBUG__ = 307
   };
 #endif
 
