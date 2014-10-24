@@ -1,0 +1,14 @@
+a.out
+lex-prog
+project
+
+Example script.html
+lex.yy.c
+project.tab.c
+project.tab.h
+
+
+ply-version/parser.out
+ply-version/parsetab.py
+ply-version/ply-3.4
+ply-version/__pycache__
