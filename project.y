@@ -18,7 +18,7 @@ int main()
 %token K_ARRAY K_CLASS K_EXTENDS /* TYPES */ /* integer boolean is not keyword */
 %token L_NUMBER L_YES L_NO/* literal */
 %token IDENT
-%token P_SIMI P_DOT P_COMMA P_L_PARA P_R_PARA P_EQ P_LT P_LE P_GT P_GE P_NE P_ASSIGN P_L_BRACKET P_R_BRACKET P_ADD P_SUB P_MUL P_DIV P_MOD/* PUNCTURATIONS */
+%token P_SEMI P_DOT P_COMMA P_L_PARA P_R_PARA P_EQ P_LT P_LE P_GT P_GE P_NE P_ASSIGN P_L_BRACKET P_R_BRACKET P_ADD P_SUB P_MUL P_DIV P_MOD/* PUNCTURATIONS */
 %token __DEBUG__
 %% 
 
@@ -46,21 +46,21 @@ function_def:
         variable_defs
     K_BEGIN
         statements
-    K_END K_FUNCTION IDENT P_SIMI;
+    K_END K_FUNCTION IDENT P_SEMI;
 
 return_type_opt:
                |
-               K_RETURN IDENT P_SIMI;
+               K_RETURN IDENT P_SEMI;
 
 type_def:
     class_def | array_def;
 array_def:
-    K_TYPE IDENT K_IS K_ARRAY K_OF L_NUMBER IDENT P_SIMI;
+    K_TYPE IDENT K_IS K_ARRAY K_OF L_NUMBER IDENT P_SEMI;
 
 class_def:
     K_TYPE IDENT K_IS K_CLASS extends_opt
         member_defs
-    K_END K_CLASS P_SIMI;
+    K_END K_CLASS P_SEMI;
 
 extends_opt:
            |
@@ -75,7 +75,7 @@ member_def:
 variable_defs: 
              |
              variable_def variable_defs;
-variable_def: K_VAR IDENT K_IS IDENT P_SIMI;
+variable_def: K_VAR IDENT K_IS IDENT P_SEMI;
 
 argument_list: /* (a, b, c) */
     P_L_PARA arguments_opt P_R_PARA;
@@ -183,15 +183,15 @@ statement:
          |
          print_stat
          | 
-         expr P_SIMI; /* f() */
+         expr P_SEMI; /* f() */
 
 assign_stat: 
-        expr P_ASSIGN expr P_SIMI;
+        expr P_ASSIGN expr P_SEMI;
 if_stat:
        K_IF expr K_THEN
             statements
        elif_branches
-       else_brach_opt
+       else_branch_opt
        K_END K_IF;
 elif_branches:
              |
@@ -199,7 +199,7 @@ elif_branches:
 elif_branch:
            K_ELIF expr K_THEN
                 statements;
-else_brach_opt:
+else_branch_opt:
               |
               K_ELSE 
                 statements;
@@ -211,15 +211,15 @@ while_stat:
 repeat_stat:
     K_REPEAT
         statements
-    K_UNTIL expr P_SIMI;
+    K_UNTIL expr P_SEMI;
 
 foreach_stat:
     K_FOREACH IDENT K_IN expr K_DO
         statements
     K_END K_FOREACH;
 return_stat:
-    K_RETURN P_SIMI
+    K_RETURN P_SEMI
     |
-    K_RETURN expr P_SIMI;
+    K_RETURN expr P_SEMI;
 print_stat:
-    K_PRINT expr P_SIMI;
+    K_PRINT expr P_SEMI;

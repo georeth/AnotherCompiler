@@ -44,7 +44,7 @@ no                      return L_NO;
 [ \t]+                  /* ignore whitespace */;
 \/\/.*                    /* ignore comments*/;
 
-";"                     return P_SIMI;
+";"                     return P_SEMI;
 "."                    return P_DOT;
 ","                    return P_COMMA;
 "("                    return P_L_PARA;
