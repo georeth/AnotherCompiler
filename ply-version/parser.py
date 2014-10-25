@@ -13,8 +13,8 @@ def p_program(p):
                 K_END                           "
     pass
 def p_topdefs(p):
-    """ top_defs : 
-                 | top_def top_defs """
+    """ top_defs :
+                 | top_defs top_def """
     pass
 
 def p_topdef(p):
@@ -35,12 +35,12 @@ def p_function_def(p):
     pass
 
 def p_return_type_opt(p):
-    """ return_type_opt : 
+    """ return_type_opt :
                         | K_RETURN IDENT P_SEMI """
     pass
 
 def p_type_def(p):
-    """ type_def : class_def 
+    """ type_def : class_def
                  | array_def """
 
 def p_array_def(p):
@@ -60,15 +60,15 @@ def p_extends_opt(p):
 
 def p_member_defs(p):
     """ member_defs :
-                    | member_def member_defs """
+                    | member_defs member_def """
     pass
 def p_member_def(p):
     """ member_def : function_def
-                   | variable_def """ 
+                   | variable_def """
     pass
 def p_variable_defs(p):
-    """ variable_defs : 
-                      | variable_def variable_defs """
+    """ variable_defs :
+                      | variable_defs variable_def """
     pass
 def p_variable_def(p):
     """ variable_def : K_VAR IDENT K_IS IDENT P_SEMI """
@@ -84,7 +84,7 @@ def p_arguments_opt(p):
     pass
 
 def p_arguments(p):
-    """ arguments : IDENT 
+    """ arguments : IDENT
                   | arguments P_COMMA IDENT """
     pass
 
@@ -98,7 +98,7 @@ def p_rel_op(p):
     pass
 
 def p_expr(p):
-    """ expr : bool_term 
+    """ expr : bool_term
              | expr K_OR bool_term """
     pass
 def p_bool_term(p):
@@ -143,25 +143,24 @@ def p_arith_factor(p):
     """
     arith_factor : arith_atom
                  | arith_factor P_DOT IDENT
-                 | arith_factor P_DOT IDENT pass_value_list 
+                 | arith_factor P_DOT IDENT pass_value_list
                  | arith_factor P_L_BRACKET expr P_R_BRACKET
     """
     pass
-    
+
 def p_arith_atom(p):
     """
-    arith_atom : L_NUMBER 
+    arith_atom : L_NUMBER
                | P_L_PARA expr P_R_PARA
-               | IDENT pass_value_list 
-               | IDENT                
-          
+               | IDENT pass_value_list
+               | IDENT
     """
     pass
 
 def p_pass_value_list(p):
     """
     pass_value_list : P_L_PARA pass_values_opt P_R_PARA
-    """ 
+    """
     pass
 
 def p_pass_values_opt(p):
@@ -173,15 +172,15 @@ def p_pass_values_opt(p):
 def p_pass_values(p):
     """
     pass_values : expr
-                | expr P_COMMA pass_values
+                | pass_values P_COMMA expr
     """
     pass
 
 
 def p_statements(p):
     """
-    statements : 
-               | statement statements
+    statements :
+               | statements statement
     """
     pass
 def p_statement(p):
@@ -211,7 +210,7 @@ def p_if_stat(p):
     pass
 def p_elif_branches(p):
     """ elif_branches :
-                      | elif_branch elif_branches
+                      | elif_branches elif_branch
     """
     pass
 def p_elif_branch(p):
@@ -219,7 +218,7 @@ def p_elif_branch(p):
                         statements      "
     pass
 def p_else_branch_opt(p):
-    """ else_branch_opt :              
+    """ else_branch_opt :
                         | K_ELSE statements """
     pass
 def p_while_stat(p):
@@ -228,7 +227,7 @@ def p_while_stat(p):
                 statements              \
               K_END K_WHILE             "
     pass
-      
+
 def p_repeat_stat(p):
     " repeat_stat :                 \
             K_REPEAT                \
