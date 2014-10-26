@@ -148,7 +148,7 @@ Tokens:
     <digit> ::= 0 | <non zero digit>
     <non zero digit> ::= 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
     <keyword> ::= program | function | return | type | var | is | begin | if | then | end |  elif | else | while | do | repeat | until | foreach | print | of | array | class | extends | in | and | or | not | yes | no
-    <identifier> is the match of regex '[_a-zA-Z][_a-zA-Z0-9]*'
+    <identifier> is string which match the regex '[_a-zA-Z][_a-zA-Z0-9]*'
 
 
 
