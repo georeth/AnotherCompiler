@@ -114,26 +114,28 @@ bool_atom:
 
 
 arith_expr:
-    arith_term_signed
-    |
-    arith_expr P_ADD arith_term_signed
-    |
-    arith_expr P_SUB arith_term_signed;
-
-arith_term_signed:
     arith_term
     |
-    P_ADD arith_term_signed
+    arith_expr P_ADD arith_term
     |
-    P_SUB arith_term_signed;
+    arith_expr P_SUB arith_term;
+
 arith_term:
     arith_factor
     |
-    arith_term P_MUL arith_factor
+    arith_term P_MUL arith_factor_signed
     |
-    arith_term P_DIV arith_factor
+    arith_term P_DIV arith_factor_signed
     |
-    arith_term P_MOD arith_factor;
+    arith_term P_MOD arith_factor_signed;
+
+arith_factor_signed:
+    arith_factor
+    |
+    P_ADD arith_factor_signed
+    |
+    P_SUB arith_factor_signed;
+    
 
 arith_factor:
     arith_atom
