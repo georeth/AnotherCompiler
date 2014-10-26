@@ -1,0 +1,154 @@
+Programs:
+    <program> ::= program <identifier> <parameter list> 
+                  <top definations>?
+                  is
+                  <variable definations>?
+                  begin
+                  <statements>?
+                  end
+
+
+Declarations:
+    <top definations> ::= <top defination>
+                        | <top definations> <top defination>
+
+    <top definaton> ::= <function defination>
+                      | <type defination>
+
+    <function defination> ::= function <identifier> <parameter list>
+                              <variable definations>?
+                              <return type>?
+                              is
+                              <varaible definations>?
+                              begin
+                              <statements>?
+                              end function <identifier>;
+
+    <return type> ::= return <identifier>;
+
+    <type defination> ::= <class definaton> 
+                        | <array defination>
+
+    <array defination> ::= type <identifier> is array of <number> <identifier>;
+    <class defination> ::= type <identifier> is class <extends>
+                           <member definations>?
+                           end class;
+    
+    <member definations> ::= <member definaton>
+                           | <member definations> <member defination>
+
+    <member defination> ::= <function defination>
+                          | <varible defination>
+
+    <varible definations> ::= <varible defination>
+                            | <varible definations> <varible defination>
+
+    <varible defination> ::= var <identifier> is <identifier>;
+
+    <parameter list> ::= (<parameters>?)
+    <parameters> ::= <identifier>
+                   | <parameters>, <identifier>
+
+
+Expressions:
+    <relation operator> ::= < | <= | == | != | > | >=
+
+    <expression> ::= <bool term>
+                   | <expression> or <bool term>
+
+    <bool term> ::= <bool factor>
+                  | <term> and <bool factor>
+    
+    <bool fatcor> ::= <bool atom>
+                    | !<bool factor>
+
+    <bool atom> ::= yes 
+                  | no 
+                  | <arith expression> 
+                  | <arith expression> <relation operator> <arith expression>
+
+    <arith expression> ::= <arith term signed>
+                         | <arith expr> + <arith term signed>
+                         | <arith expr> - <arith term signed>
+    
+    <arith term signed> ::= <arith term>
+                          | + <arith term signed>
+                          | - <arith term signed>
+
+    <arith term> ::= <arith factor>
+                   | <arith term> * <arith factor>
+                   | <arith term> / <arith factor>
+                   | <arith term> % <arith factor>
+
+    <arith factor> ::= <arith atom>
+                     | <arith factor> . <identifier>
+                     | <arith factor> . <identifier> <pass value list>
+                     | <arith factor> [ <expression> ]
+
+    <arith atom> ::= <number>
+                   | ( <expression> )
+                   | <identifier> <pass value list>
+                   | <identifier>
+
+    <pass value list> ::= ( <pass values>? )
+
+    <pass values> ::= <expression>
+                    | <pass values> , <expression>
+
+
+Blocks and Commands:
+    <statements> ::= <statement>
+                 | <statements> <statement>
+                 
+    <statement> ::= <assign statement>            
+                  | <if statement>
+                  | <while statement>
+                  | <repeat statement>
+                  | <foreach statement>
+                  | <print statement>
+                  | <return statement>
+                  | <expression>?;
+
+    <assign statement> ::= <expression> = <expression>;
+
+    <if statement> ::= if <expression> then
+                            <statements>?
+                       <elif branches>?
+                       <else branches>?
+                       end if
+
+    <elif branches> ::= <elif branch>
+                      | <elif branches> <elif branch>
+                      
+    <elif branch> ::= elif <statements>
+
+
+    <else branch> ::= else <statements>
+
+
+    <while statement> ::= while <expression> do
+                          <statements>
+                          end while
+
+    <repeat statement> ::= repeat 
+                           <statements>
+                           until <expression> ;
+
+    <foreach statement> ::= foreach <identifier> in <expression> do
+                            <statements>
+                            end foreach
+
+    <return statement> ::= return <expression>;
+
+    <print statement> ::= print <expression>;
+
+Tokens:
+    <number> ::= 0 | <non zero digit><digits>?
+    <digits> ::= <digit> | <digits> <digit>
+    <digit> ::= 0 | <non zero digit>
+    <non zero digit> ::= 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+    <keyword> ::= program | function | return | type | var | is | begin | if | then | end |  elif | else | while | do | repeat | until | foreach | print | of | array | class | extends | in | and | or | not | yes | no
+    <identifier> is the match of regex '[_a-zA-Z][_a-zA-Z0-9]*'
+
+
+
