@@ -121,7 +121,7 @@ arith_expr:
     arith_expr P_SUB arith_term;
 
 arith_term:
-    arith_factor
+    arith_factor_signed
     |
     arith_term P_MUL arith_factor_signed
     |
