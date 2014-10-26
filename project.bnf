@@ -67,18 +67,18 @@ Expressions:
                   | <arith expression> 
                   | <arith expression> <relation operator> <arith expression>
 
-    <arith expression> ::= <arith term signed>
-                         | <arith expr> + <arith term signed>
-                         | <arith expr> - <arith term signed>
+    <arith expression> ::= <arith term>
+                         | <arith expr> + <arith term>
+                         | <arith expr> - <arith term>
     
-    <arith term signed> ::= <arith term>
-                          | + <arith term signed>
-                          | - <arith term signed>
+    <arith term> ::= <arith factor signed>
+                   | <arith term> * <arith factor signed>
+                   | <arith term> / <arith factor signed>
+                   | <arith term> % <arith factor signed>
 
-    <arith term> ::= <arith factor>
-                   | <arith term> * <arith factor>
-                   | <arith term> / <arith factor>
-                   | <arith term> % <arith factor>
+    <arith factor signed> ::= <arith factor>
+                          | + <arith factor signed>
+                          | - <arith factor signed>
 
     <arith factor> ::= <arith atom>
                      | <arith factor> . <identifier>
