@@ -254,5 +254,6 @@ def p_print_stat(p):
 
 def p_error(tok):
     print("syntax error {0}".format(tok))
+    print("line :", tok.lexer.lineno);
 
 parser = yacc.yacc()
