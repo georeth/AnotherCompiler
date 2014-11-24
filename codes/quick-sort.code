@@ -27,6 +27,10 @@ program example()
                 right := right - 1;
             end if
         end while
+        temp := arr[from];
+        arr[from] := arr[right];
+        arr[right] := temp;
+
         quicksort(arr, from, right);
         quicksort(arr, left, to);
     end function quicksort;
