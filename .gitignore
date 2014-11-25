@@ -2,7 +2,6 @@ a.out
 lex-prog
 project
 
-Example script.html
 lex.yy.c
 project.tab.c
 project.tab.h
