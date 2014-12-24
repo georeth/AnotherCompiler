@@ -4,13 +4,13 @@ Another Compiler
 
 - configure ply(python-lex-yacc)
 
-[recommended] install pip(2|3) than
+method1: [recommended] install pip(2|3) then
 ```bash
 sudo pip(2|3) install ply
 ```
 
 
-download ply-3.4.tar.gz then extract it
+method2: download ply-3.4.tar.gz then extract it
 ```bash
 cp -r PLY_EXTRACT_PATH/ply-3.4/ply GIT_REPO_ROOT/ply-version/
 ```
