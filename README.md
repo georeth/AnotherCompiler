@@ -4,6 +4,11 @@ Another Compiler
 
 - configure ply(python-lex-yacc)
 
+[recommended] install pip(2|3) than
+```bash
+sudo pip(2|3) install ply
+```
+
 
 download ply-3.4.tar.gz then extract it
 ```bash
@@ -16,7 +21,6 @@ debian-based linux:
 ```bash
 sudo apt-get install llvm-3.3-dev gcc python python-dev
 ```
-
 archlinux:
 ```bash
 pacman -syu llvm-3.3 pyhton pyhton-dev gcc
@@ -24,13 +28,12 @@ pacman -syu llvm-3.3 pyhton pyhton-dev gcc
 
 - configure llvmpy
 ```bash
-    cd GIT_REPO_ROOT/ply-version
-    git clone https://github.com/llvmpy/llvmpy.git
-    cd llvmpy
-    sudo LLVM_CONFIG_PATH=LLVM_INSTALL_PATH/bin/llvm-config python setup.py install
+cd GIT_REPO_ROOT/ply-version
+git clone https://github.com/llvmpy/llvmpy.git
+cd llvmpy
+sudo LLVM_CONFIG_PATH=LLVM_INSTALL_PATH/bin/llvm-config python setup.py install
 ```
 then run the test
 ```bash
-    cd GIT_REPO_ROOT/ply-version/llvmpy/llvmpy/ #IMPORTANT!
-    python -c "import llvm; llvm.test()"
+python -c "import llvm; llvm.test()"
 ```
