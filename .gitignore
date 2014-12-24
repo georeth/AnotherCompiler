@@ -10,4 +10,5 @@ project.tab.h
 ply-version/parser.out
 ply-version/parsetab.py
 ply-version/ply-3.4
+ply-version/ply
 ply-version/__pycache__
