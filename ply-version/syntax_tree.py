@@ -16,6 +16,70 @@ class Node(object):
         visitor.enter(self)
         visitor.leave(self)
 
+class Kind(Node):
+    def __str__(self):
+        return 'type'
+
+class NumKind(Kind):
+    def __str__(self):
+        return 'num'
+
+NumKind.kind = NumKind()
+
+class IntKind(Kind):
+    def __str__(self):
+        return 'integer'
+
+IntKind.kind = IntKind()
+
+class BoolKind(IntKind):
+    def __str__(self):
+        return 'boolean'
+
+BoolKind.kind = BoolKind()
+
+class ArrayKind(Kind):
+    def __init__(self, size, kind):
+        self.size = size
+        self.kind = kind
+
+    def __str__(self):
+        return str(self.kind) + '[' + str(self.size) + ']'
+
+    def visit(self, visitor):
+        visitor.enter(self)
+        self.kind.visit(visitor)
+        visitor.leave(self)
+
+class FuncKind(Kind):
+    def __init__(self, arg_kinds, ret):
+        self.arg_kinds = arg_kinds
+        self.ret = ret
+
+    def __str__(self):
+        arg_kinds_str = ', '.join(map(str, self.arg_kinds))
+        return 'function<' + str(self.ret) + '(' + arg_kinds_str + ')>'
+
+class Klass(Kind):
+    def __init__(self, decls, base, name=None):
+        self.decls = decls
+        self.base = base
+        self.name = name
+
+    def __str__(self):
+        result = self.node_type() + ": "
+        if self.name:
+            result += self.name
+        if self.base:
+            result += " extends " + str(self.base)
+        return result
+
+    def visit(self, visitor):
+        visitor.enter(self)
+        for name, decl in self.decls.items():
+            decl.visit(visitor)
+        visitor.leave(self)
+
 class Program(Node):
     def __init__(self, name, args, decls, impl):
         self.name = name
@@ -39,6 +103,8 @@ class FuncDecl(Node):
         self.args = args
         self.ret = ret
         self.impl = impl
+        arg_kinds = map(lambda decl: decl.kind, self.args.args)
+        self.kind = FuncKind(arg_kinds, ret)
 
     def __str__(self):
         return self.node_type() + ": " + self.name
@@ -99,57 +165,10 @@ class KindDecl(Node):
 class KindRef(Node):
     def __init__(self, name):
         self.name = name
+        self.kind = None
 
     def __str__(self):
         return "<" + self.name + ">"
-
-class Kind(Node):
-    pass
-
-class NumKind(Kind):
-    pass
-NumKind.kind = NumKind()
-
-class IntKind(Kind):
-    pass
-IntKind.kind = IntKind()
-
-class BoolKind(Kind):
-    pass
-BoolKind.kind = BoolKind()
-
-class ArrayKind(Kind):
-    def __init__(self, size, kind):
-        self.size = size
-        self.kind = kind
-
-    def __str__(self):
-        return self.node_type() + ": " + str(self.size) + "*" + str(self.kind)
-
-    def visit(self, visitor):
-        visitor.enter(self)
-        self.kind.visit(visitor)
-        visitor.leave(self)
-
-class Klass(Kind):
-    def __init__(self, decls, base, name=None):
-        self.decls = decls
-        self.base = base
-        self.name = name
-
-    def __str__(self):
-        result = self.node_type() + ": "
-        if self.name:
-            result += self.name
-        if self.base:
-            result += " extends " + str(self.base)
-        return result
-
-    def visit(self, visitor):
-        visitor.enter(self)
-        for name, decl in self.decls.items():
-            decl.visit(visitor)
-        visitor.leave(self)
 
 class Expr(Node):
     def __init__(self, kind):
@@ -215,10 +234,11 @@ class BracketExpr(Expr):
         visitor.leave(self)
 
 class CallExpr(Expr):
-    def __init__(self, expr, args):
+    def __init__(self, expr, args, target=None):
         super().__init__(expr.kind.ret if expr.kind else None)
         self.expr = expr
         self.args = args
+        self.target = target
 
     def __str__(self):
         return str(self.expr) + "(" + ", ".join(map(str, self.args)) + ")"
@@ -240,14 +260,14 @@ class BoolLiteral(Literal):
 
 class YesLiteral(BoolLiteral):
     def __init__(self):
-        super().__init__(True)
+        super().__init__(1)
 
     def __str__(self):
         return "yes"
 
 class NoLiteral(BoolLiteral):
     def __init__(self):
-        super().__init__(False)
+        super().__init__(0)
 
     def __str__(self):
         return "no"
@@ -268,14 +288,6 @@ class VarRef(Expr):
 
     def __str__(self):
         return str(self.name)
-
-class FuncRef(Expr):
-    def __init__(self, func):
-        super().__init__(func.kind)
-        self.func = func
-
-    def __str__(self):
-        return str(self.var.name)
 
 class Stat(Node):
     pass

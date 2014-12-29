@@ -219,7 +219,7 @@ def p_arith_factor(p):
         p[0] = DotExpr(None, p[1], p[3])
     elif len(p) == 5:
         if p[2] == '.':
-            p[0] = CallExpr(DotExpr(None, p[1], p[3]), p[4])
+            p[0] = CallExpr(DotExpr(None, p[1], p[3]), p[4], p[1])
         else:
             p[0] = BracketExpr(None, p[1], p[3])
 
