@@ -9,8 +9,8 @@ from utils import for_each_file_do
 def process(content, filename):
     prog = parser.parse(content)
     if prog:
-        prog.visit(AnalyzeVisitor())
-        prog.visit(PrintVisitor())
+        prog = analyze(prog)
+        prog = prog.visit(PrintVisitor())
 
 if __name__ == '__main__':
     for_each_file_do(process)

@@ -16,6 +16,16 @@ class PrintVisitor(NodeVisitor):
             if isinstance(node, FuncDecl):
                 print(node, end=' => ')
                 print(node.ret)
+            elif isinstance(node, Klass):
+                result = "Klass: "
+                if node.name:
+                    result += node.name
+                if node.base:
+                    result += " extends " + node.base.name
+                print(result)
+                for name, kind in node.vars.items():
+                    print(self.indent + '  ', end='')
+                    print('VarDecl: ' + name + ' ' + str(kind))
             elif self.expr_details and isinstance(node, Expr):
                 print(node.node_type() + ' <' + str(node.kind) + '>', end=': ')
                 print(node)
@@ -34,8 +44,7 @@ class PrintVisitor(NodeVisitor):
                         self.ignore.add(node.rhs)
         self.level += 1
         self.indent += '  '
-        if isinstance(node, FuncDecl):
-            node.args.visit(self)
+        return node
 
     def leave(self, node):
         if self.current_ignore == node:
@@ -43,3 +52,4 @@ class PrintVisitor(NodeVisitor):
             self.ignore.remove(node)
         self.level -= 1
         self.indent = self.indent[:-2]
+        return node

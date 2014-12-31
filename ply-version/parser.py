@@ -9,7 +9,7 @@ def p_program(p):
                     top_defs                    \
                 K_IS                            \
                 impl                            "
-    p[0] = Program(p[2], p[3], p[4], p[6])
+    p[0] = Program(p[2], ArgList([]), p[4], p[6])
 
 def p_topdefs(p):
     """ top_defs :
@@ -34,7 +34,9 @@ def p_function_def(p):
                     K_IS                           \
                     impl                           \
                     K_FUNCTION IDENT P_SEMI        "
-    p[0] = FuncDecl(p[2], ArgList(p[3], p[4]), p[5], p[7])
+    names = p[3]
+    decl_list = list(map(lambda name: p[4][name], names))
+    p[0] = FuncDecl(p[2], ArgList(decl_list), p[5], p[7])
 
 def p_impl(p):
     "impl : variable_defs                  \
@@ -64,7 +66,7 @@ def p_class_def(p):
         K_TYPE IDENT K_IS K_CLASS extends_opt   \
             member_defs                         \
         K_END K_CLASS P_SEMI                    "
-    p[0] = KindDecl(p[2], Klass(p[6], p[5], p[2]))
+    p[0] = KindDecl(p[2], KlassDecl(p[6], p[5], p[2]))
 
 def p_extends_opt(p):
     """ extends_opt :
@@ -140,7 +142,7 @@ def p_expr(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = BinaryExpr(BoolKind.kind, p[1], "or", p[3])
+        p[0] = BinaryExpr(p[1], "or", p[3])
 
 def p_bool_term(p):
     """ bool_term : bool_factor
@@ -148,7 +150,7 @@ def p_bool_term(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = BinaryExpr(BoolKind.kind, p[1], "and", p[3])
+        p[0] = BinaryExpr(p[1], "and", p[3])
 
 def p_bool_factor(p):
     """ bool_factor : bool_atom
@@ -157,7 +159,7 @@ def p_bool_factor(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = UnaryExpr(BoolKind.kind, "not", p[2])
+        p[0] = UnaryExpr("not", p[2])
 
 def p_bool_atom(p):
     """ bool_atom : bool_literal
@@ -166,7 +168,7 @@ def p_bool_atom(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = BinaryExpr(BoolKind.kind, p[1], p[2], p[3])
+        p[0] = BinaryExpr(p[1], p[2], p[3])
 
 def p_bool_literal(p):
     """ bool_literal : L_YES
@@ -183,7 +185,7 @@ def p_arith_expr(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = BinaryExpr(NumKind.kind, p[1], p[2], p[3])
+        p[0] = BinaryExpr(p[1], p[2], p[3])
 
 def p_arith_term_signed(p):
     """
@@ -193,7 +195,7 @@ def p_arith_term_signed(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = UnaryExpr(NumKind.kind, p[1], p[2])
+        p[0] = UnaryExpr(p[1], p[2])
 
 def p_arith_term(p):
     """
@@ -204,7 +206,7 @@ def p_arith_term(p):
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = BinaryExpr(NumKind.kind, p[1], p[2], p[3])
+        p[0] = BinaryExpr(p[1], p[2], p[3])
 
 def p_arith_factor(p):
     """
@@ -216,12 +218,12 @@ def p_arith_factor(p):
     if len(p) == 2:
         p[0] = p[1]
     elif len(p) == 4:
-        p[0] = DotExpr(None, p[1], p[3])
+        p[0] = DotExpr(p[1], p[3])
     elif len(p) == 5:
         if p[2] == '.':
-            p[0] = CallExpr(DotExpr(None, p[1], p[3]), p[4], p[1])
+            p[0] = CallExpr(DotExpr(p[1], p[3]), [p[1]] + p[4])
         else:
-            p[0] = BracketExpr(None, p[1], p[3])
+            p[0] = BracketExpr(p[1], p[3])
 
 def p_arith_atom(p):
     """
