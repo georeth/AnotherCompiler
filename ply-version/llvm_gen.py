@@ -95,10 +95,20 @@ class LLVMGenerator(object):
                 raise Exception()
 
     def assignStatLLVM(self, func, assignStat):
-        return
+        if isinstance(assignStat.lhs, VarRef):
+            if assignStat.lhs.name in self.var_stack[-1]:
+                var_addr = self.var_stack[-1][assignStat.lhs.name]
+            else:
+                print("No such variable {0}".format(assignStat.lhs.name))
+            result = self.exprStatLLVM(assignStat.rhs)
+            self.builder.store(result, var_addr)
+        else:
+            print("invalid assignment lhs")
+            raise Exception()
 
     def returnStatLLVM(self, func, returnStat):
-        return
+        result = self.exprStatLLVM(returnStat.expr)
+        self.builder.ret(result)
 
     def printStatLLVM(self, func, printStat):
         return
@@ -122,12 +132,55 @@ class LLVMGenerator(object):
             return self.varRefLLVM(exprStat)
     
     def unaryExprLLVM(self, unaryExpr):
-        print(type(unaryExpr.op))
         expr = self.exprStatLLVM(unaryExpr.expr)
-        return Constant.int(Type.int(32), 1)
+        
+        if unaryExpr.op == "not":
+            result = self.builder.icmp(ICMP_EQ, expr, Constant.int(Type.int(32), 0), "not_expr")
+        elif unaryExpr.op == "+":
+            result = expr
+        elif unaryExpr.op == "-":
+            result = self.builder.neg(expr, "neg_expr")
+        
+        return result;
 
     def binaryExprLLVM(self, binaryExpr):
-        return Constant.int(Type.int(32), 1)
+        lhs = self.exprStatLLVM(binaryExpr.lhs)
+        rhs = self.exprStatLLVM(binaryExpr.rhs)
+        if binaryExpr.op == "+":
+            result = self.builder.add(lhs, rhs, "add_expr")
+        elif binaryExpr.op == "-":
+            result = self.builder.sub(lhs, rhs, "sub_expr")
+        elif binaryExpr.op == "*":
+            result = self.builder.mul(lhs, rhs, "mul_expr")
+        elif binaryExpr.op == "/":
+            result = self.builder.sdiv(lhs, rhs, "sdiv_expr")
+        elif binaryExpr.op == "%":
+            result = self.builder.srem(lhs, rhs, "srem_expr")
+        elif binaryExpr.op == "==":
+            result = self.builder.icmp(ICMP_EQ, lhs, rhs, "eq_expr")
+        elif binaryExpr.op == "!=":
+            result = self.builder.icmp(ICMP_NE, lhs, rhs, "ne_expr")
+        elif binaryExpr.op == "<":
+            result = self.builder.icmp(ICMP_SLT, lhs, rhs, "slt_expr")
+        elif binaryExpr.op == "<=":
+            result = self.builder.icmp(ICMP_SLE, lhs, rhs, "sle_expr")
+        elif binaryExpr.op == ">":
+            result = self.builder.icmp(ICMP_SGT, lhs, rhs, "sgt_expr")
+        elif binaryExpr.op == ">=":
+            result = self.builder.icmp(ICMP_SGE, lhs, rhs, "sge_expr")
+        elif binaryExpr.op == "and":
+            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(Type.int(32), 0), "lhs_bool")
+            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(Type.int(32), 0), "rhs_bool")
+            result = self.builder.and_(lhs_bool, rhs_bool, "and_expr")
+        elif binaryExpr.op == "or":
+            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(Type.int(32), 0), "lhs_bool")
+            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(Type.int(32), 0), "rhs_bool")
+            result = self.builder.or_(lhs_bool, rhs_bool, "or_expr")
+        else:
+            print("no such operand {0}".format(binaryExpr.op))
+            raise Exception()
+
+        return result;
 
     def dotExprLLVM(self, dotExpr):
         return Constant.int(Type.int(32), 1)
@@ -142,7 +195,14 @@ class LLVMGenerator(object):
         return Constant.int(Type.int(32), 1)
 
     def varRefLLVM(self, varRef):
-        return Constant.int(Type.int(32), 1)
+        if varRef.name in self.var_stack[-1]:
+            var_addr = self.var_stack[-1][varRef.name]
+            result = self.builder.load(var_addr, varRef.name)
+        else:
+            print("not variable named: {0}".format(varRef.name))
+            raise Exception()
+
+        return result
 
     def ifStatLLVM(self, func, ifStat):
         ifBranches = []

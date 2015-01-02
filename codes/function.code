@@ -42,16 +42,20 @@ program example()
     var i is integer;
   begin
     i := -0;
-    sum := +0;
+    s := +0;
     while i < n do
       s := s + i;
       i := i + 1;
     end while
     
+    if not i == -1 then
+      i := -1;
+    end if
+
     i := -0;
-    sum := +0;
+    s := +0;
     repeat
-      sum := sum + i;
+      s := s + i;
       i := i + 1;
     until i == n;
 
