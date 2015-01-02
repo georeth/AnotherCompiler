@@ -406,6 +406,7 @@ class BoolLiteral(Literal):
     def __init__(self, value):
         super().__init__(BoolKind.kind)
         self.value = value
+        self.llvm_type = Constant.int(Type.int(32), value)
 
 class YesLiteral(BoolLiteral):
     def __init__(self):
@@ -425,6 +426,7 @@ class NumLiteral(Literal):
     def __init__(self, value):
         super().__init__(IntKind.kind)
         self.value = value
+        self.llvm_type = Constant.int(Type.int(32), value)
 
     def __str__(self):
         return str(self.value)

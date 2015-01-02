@@ -2,6 +2,23 @@ from llvm import *
 from llvm.core import *
 from syntax_tree import *
 
+class Symbol(object):
+    def getVal(self, builder):
+        pass
+    def getAddr(self):
+        pass
+
+class IntType(Symbol):
+    def __init__(self, builder, name):
+        self.name = name
+        self.var = builder.alloca(Type.int(32), name)
+    def getVal(self, builder):
+        return builder.load(self.var, self.name)
+
+    def getAddr(self):
+        return self.var
+
+
 class LLVMGenerator(object):
     def __init__(self):
         self.var_stack = []
@@ -24,18 +41,23 @@ class LLVMGenerator(object):
                 continue
 
     def funcLLVM(self, funcNode):
-    #declare the function
+    # declare the function
         func_type = Type.function(funcNode.kind.ret.llvm_type,
                 funcNode.kind.arg_llvm_type())
         func = Function.new(self.llvm_module, func_type, funcNode.name)
         
+        entry = func.append_basic_block('entry')
+        self.builder = Builder.new(entry)
     # enter the function scope
         self.var_stack.append(dict(self.var_stack[-1]))
-        i = 0
-        for name in funcNode.args.names:
-            func.args[i].name = name
-            self.var_stack[-1][name] = func.args[i]
-            i = i + 1
+        
+    # create argument allocas
+        for arg, arg_decl in zip(func.args, funcNode.args.decl_list):
+            arg.name = arg_decl.name
+            alloca = self.builder.alloca(arg_decl.kind.llvm_type, None, arg_decl.name)
+            self.builder.store(arg, alloca)
+            self.var_stack[-1][arg_decl.name] = alloca
+
     # implement the function node
         self.funcImplLLVM(func, funcNode.impl)
 
@@ -43,13 +65,12 @@ class LLVMGenerator(object):
         self.var_stack.pop()
 
     def funcImplLLVM(self, func, implNode):
-        entry = func.append_basic_block('entry')
         self.varDeclsLLVM(func, implNode.vars)
-        self.builder = Builder.new(entry)
         self.statsLLVM(func, implNode.stats)
     
     def varDeclsLLVM(self, func, varDecls):
-        return
+        for name, varDecl in varDecls.items():
+            self.var_stack[-1][varDecl.name] = self.builder.alloca(varDecl.kind.llvm_type, None, name)
 
     def statsLLVM(self, func, stats):
         for stat in stats:
@@ -83,8 +104,44 @@ class LLVMGenerator(object):
         return
 
     def exprStatLLVM(self, func, exprStat):
-        return Constant.int(Type.int(32), 1)
+        if isinstance(exprStat, UnaryExpr):
+            return self.unaryExprLLVM(exprStat)
+        elif isinstance(exprStat, BinaryExpr):
+            return self.binaryExprLLVM(exprStat)
+        elif isinstance(exprStat, DotExpr):
+            return self.dotExprLLVM(exprStat)
+        elif isinstance(exprStat, BracketExpr):
+            return self.bracketExpr(exprStat)
+        elif isinstance(exprStat, CallExpr):
+            return self.callExprLLVM(exprStat)
+        elif isinstance(exprStat, MethodExpr):
+            return self.methodExprLLVM(exprStat)
+        elif isinstance(exprStat, (BoolLiteral, NumLiteral)):
+            return exprStat.llvm_type
+        elif isinstance(exprStat, VarRef):
+            return self.varRefLLVM(exprStat)
     
+    def unaryExprLLVM(self, unaryExpr):
+        return Constant.int(Type.int(32), 1)
+
+    def binaryExprLLVM(self, binaryExpr):
+        return Constant.int(Type.int(32), 1)
+
+    def dotExprLLVM(self, dotExpr):
+        return Constant.int(Type.int(32), 1)
+
+    def bracketExprLLVM(self, bracketExpr):
+        return Constant.int(Type.int(32), 1)
+
+    def callExprLLVM(self, callExpr):
+        return Constant.int(Type.int(32), 1)
+
+    def methodExprLLVM(self, methodEpxr):
+        return Constant.int(Type.int(32), 1)
+
+    def varRefLLVM(self, varRef):
+        return Constant.int(Type.int(32), 1)
+
     def ifStatLLVM(self, func, ifStat):
         ifBranches = []
     # build blocks
