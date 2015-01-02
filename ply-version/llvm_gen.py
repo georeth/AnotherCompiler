@@ -81,7 +81,7 @@ class LLVMGenerator(object):
             elif isinstance(stat, PrintStat):
                 self.printStatLLVM(func, stat)
             elif isinstance(stat, ExprStat):
-                self.exprStatLLVM(func, stat)
+                self.exprStatLLVM(stat)
             elif isinstance(stat, IfStat):
                 self.ifStatLLVM(func, stat)
             elif isinstance(stat, WhileStat):
@@ -103,7 +103,7 @@ class LLVMGenerator(object):
     def printStatLLVM(self, func, printStat):
         return
 
-    def exprStatLLVM(self, func, exprStat):
+    def exprStatLLVM(self, exprStat):
         if isinstance(exprStat, UnaryExpr):
             return self.unaryExprLLVM(exprStat)
         elif isinstance(exprStat, BinaryExpr):
@@ -122,6 +122,8 @@ class LLVMGenerator(object):
             return self.varRefLLVM(exprStat)
     
     def unaryExprLLVM(self, unaryExpr):
+        print(type(unaryExpr.op))
+        expr = self.exprStatLLVM(unaryExpr.expr)
         return Constant.int(Type.int(32), 1)
 
     def binaryExprLLVM(self, binaryExpr):
@@ -164,7 +166,7 @@ class LLVMGenerator(object):
         self.builder.branch(if_block)
         # implement if_block
         self.builder.position_at_end(if_block)
-        result = self.exprStatLLVM(func, ifStat.expr)
+        result = self.exprStatLLVM(ifStat.expr)
         if len(ifBranches) == 0:
             self.builder.cbranch(result, then_block, end_block)
         else:
@@ -180,7 +182,7 @@ class LLVMGenerator(object):
             ifBranch = ifBranches[0]
             if len(ifBranches) > 1:
                 self.builder.position_at_end(ifBranch[0])
-                result = self.exprStatLLVM(func, ifBranch[2].expr)
+                result = self.exprStatLLVM(ifBranch[2].expr)
                 if ifBranches[1][0] == None:
                     self.builder.cbranch(result, ifBranch[1], ifBranches[1][1])
                 else:
@@ -201,7 +203,7 @@ class LLVMGenerator(object):
     #implement
         self.builder.branch(while_block)
         self.builder.position_at_end(while_block)
-        result = self.exprStatLLVM(func, whileStat.expr)
+        result = self.exprStatLLVM(whileStat.expr)
         self.builder.cbranch(result, body_block, end_block)
 
         self.builder.position_at_end(body_block)
@@ -222,7 +224,7 @@ class LLVMGenerator(object):
         self.builder.branch(until_block)
 
         self.builder.position_at_end(until_block)
-        result = self.exprStatLLVM(func, repeatStat.expr)
+        result = self.exprStatLLVM(repeatStat.expr)
         self.builder.cbranch(result, end_block, repeat_block)
 
         self.builder.position_at_end(end_block)
