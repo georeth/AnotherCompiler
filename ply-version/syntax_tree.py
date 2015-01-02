@@ -307,7 +307,7 @@ class UnaryExpr(Expr):
         self.expr = expr
 
     def __str__(self):
-        return self.op + self.expr
+        return self.op + str(self.expr)
 
     def _visit(self, visitor):
         expr = self.expr.visit(visitor)
