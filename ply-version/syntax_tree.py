@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+from llvm.core import *
+
 class NodeVisitor(object):
     def enter(self, node):
         return node
@@ -65,6 +67,9 @@ class NumKind(Kind):
 NumKind.kind = NumKind()
 
 class IntKind(Kind):
+    def __init__(self):
+        self.llvm_type = Type.int(32)
+
     def __str__(self):
         return 'integer'
 
@@ -80,7 +85,7 @@ class ArrayKind(Kind):
     def __init__(self, size, kind):
         self.size = size
         self.kind = kind
-
+        self.llvm_type = Type.array(kind.llvm_type, size)
     def __str__(self):
         return str(self.kind) + '[' + str(self.size) + ']'
 
@@ -94,6 +99,9 @@ class FuncKind(Kind):
     def __init__(self, arg_kinds, ret):
         self.arg_kinds = arg_kinds
         self.ret = ret
+
+    def arg_llvm_type(self):
+        return tuple(map(lambda kind: kind.llvm_type, self.arg_kinds))
 
     def __str__(self):
         arg_kinds_str = ', '.join(map(str, self.arg_kinds))
@@ -181,7 +189,7 @@ class FuncDecl(Node):
 class ArgList(Node):
     def __init__(self, decl_list):
         self.decl_list = decl_list
-        self.names = map(lambda decl: decl.name, decl_list)
+        self.names = list(map(lambda decl: decl.name, decl_list))
 
     def __str__(self):
         return self.node_type() + ": " + ", ".join(self.names)

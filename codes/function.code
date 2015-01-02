@@ -1,13 +1,70 @@
 program example()
+  // 一个判断 n 是否为奇数的函数
   function isodd(n)
-    //var n is integer;
-    //return boolean;
+    // 定义函数的参数
+    var n is integer;
+    // 定义函数的返回值
+    return boolean;
+  // 声明部分
+  is
+  // 实现部分
+  begin
+    if n % 2 == 0 then
+      // yes 表示布尔真值
+      return yes;
+    end if
+    // no 表示布尔假
+    return no;
+  // 函数结束
+  end function isodd;
+
+  // ackerman 函数
+  function ackerman(m, n)
+    var m is integer;
+    var n is integer;
+    return integer;
   is
   begin
-  end function isodd;
+    if m == 0 then
+      return n + 1;
+    elif m > 0 and n == 0 then
+      return ackerman(m - 1, 1);
+    else
+      return ackerman(m - 1, ackerman(m, n - 1));
+    end if
+  end function ackerman;
+
+  function sum(n)
+    var n is integer;
+    return integer;
+  is
+    var s is integer;
+    var i is integer;
+  begin
+    i := 0;
+    sum := 0;
+    while i < n do
+      s := s + i;
+      i := i + 1;
+    end while
+    
+    i := 0;
+    sum := 0;
+    repeat
+      sum := sum + i;
+      i := i + 1;
+    until i == n;
+
+    return s;
+  end function sum;
+// 主程序的声明
 is
-  var p is a;
-  var q is b;
+  var p is integer;
+  var q is integer;
 // 主程序
 begin
+  ackerman(3, 4);
+  if isodd(3) then
+    print 3;
+  end if
 end
