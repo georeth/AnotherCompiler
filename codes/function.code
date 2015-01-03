@@ -67,8 +67,8 @@ is
   var q is integer;
 // 主程序
 begin
-  ackerman(3, 4);
-  if isodd(3) then
+  p := ackerman(3, 4);
+  if isodd(4) then
     print 3;
   end if
 end

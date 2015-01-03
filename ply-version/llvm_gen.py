@@ -1,5 +1,6 @@
-from llvm import *
+from llvm.ee import *
 from llvm.core import *
+from llvm.passes import *
 from syntax_tree import *
 
 class Symbol(object):
@@ -29,6 +30,15 @@ class LLVMGenerator(object):
     def progLLVM(self, progNode):
         self.llvm_module = Module.new(progNode.name)
         self.var_stack.append({})
+        
+        print_type = Type.function(Type.int(32), [Type.pointer(Type.int(8)),], True)
+        self.print_int = self.llvm_module.add_function(print_type, "printf")
+        format_str_data = Constant.stringz("%d\n")
+        format_array = self.llvm_module.add_global_variable(format_str_data.type, "format_str")
+        format_array.initializer = format_str_data
+        format_array.global_constant = True
+        self.format_str = format_array.gep([Constant.int(Type.int(32), 0), Constant.int(Type.int(32), 0)])
+
         self.declLLVM(progNode.decls)
         self.progImplLLVM(progNode.impl)
         print(self.llvm_module)
@@ -42,16 +52,23 @@ class LLVMGenerator(object):
 
     def funcLLVM(self, funcNode):
     # declare the function
-        func_type = Type.function(funcNode.kind.ret.llvm_type,
-                funcNode.kind.arg_llvm_type())
+        if(funcNode.kind.ret == None):
+            return_type = Type.void()
+        else:
+            return_type = funcNode.kind.ret.llvm_type
+        func_type = Type.function(return_type, funcNode.kind.arg_llvm_type())
         func = Function.new(self.llvm_module, func_type, funcNode.name)
         
         entry = func.append_basic_block('entry')
+        self.return_block = func.append_basic_block('return')
         self.builder = Builder.new(entry)
+        self.builder.position_at_end(entry)
     # enter the function scope
         self.var_stack.append(dict(self.var_stack[-1]))
         
     # create argument allocas
+        if return_type != Type.void():
+            self.ret_val = self.builder.alloca(return_type, None, 'ret_val')
         for arg, arg_decl in zip(func.args, funcNode.args.decl_list):
             arg.name = arg_decl.name
             alloca = self.builder.alloca(arg_decl.kind.llvm_type, None, arg_decl.name)
@@ -60,7 +77,15 @@ class LLVMGenerator(object):
 
     # implement the function node
         self.funcImplLLVM(func, funcNode.impl)
-
+        
+        if(self.builder.basic_block.terminator == None):
+            self.builder.branch(self.return_block)
+        self.builder.position_at_end(self.return_block)
+        if return_type != Type.void():
+            ret_val = self.builder.load(self.ret_val, 'ret_val')
+            self.builder.ret(ret_val)
+        else:
+            self.builder.ret_void()
     # leave the function scope
         self.var_stack.pop()
 
@@ -78,6 +103,7 @@ class LLVMGenerator(object):
                 self.assignStatLLVM(func, stat)
             elif isinstance(stat, ReturnStat):
                 self.returnStatLLVM(func, stat)
+                return
             elif isinstance(stat, PrintStat):
                 self.printStatLLVM(func, stat)
             elif isinstance(stat, ExprStat):
@@ -109,12 +135,12 @@ class LLVMGenerator(object):
     def returnStatLLVM(self, func, returnStat):
         if returnStat.expr != None:
             result = self.exprStatLLVM(returnStat.expr)
-            self.builder.ret(result)
-        else:
-            self.builder.ret_void()
+            self.builder.store(result, self.ret_val)
+        
+        self.builder.branch(self.return_block)
 
     def printStatLLVM(self, func, printStat):
-        return
+        print_int = self.builder.call(self.print_int, [self.format_str, self.exprStatLLVM(printStat.expr)], "print_int")
 
     def exprStatLLVM(self, exprStat):
         if isinstance(exprStat, UnaryExpr):
@@ -138,7 +164,7 @@ class LLVMGenerator(object):
         expr = self.exprStatLLVM(unaryExpr.expr)
         
         if unaryExpr.op == "not":
-            result = self.builder.icmp(ICMP_EQ, expr, Constant.int(Type.int(32), 0), "not_expr")
+            result = self.builder.icmp(ICMP_EQ, expr, Constant.int(expr.type, 0), "not_expr")
         elif unaryExpr.op == "+":
             result = expr
         elif unaryExpr.op == "-":
@@ -172,12 +198,12 @@ class LLVMGenerator(object):
         elif binaryExpr.op == ">=":
             result = self.builder.icmp(ICMP_SGE, lhs, rhs, "sge_expr")
         elif binaryExpr.op == "and":
-            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(Type.int(32), 0), "lhs_bool")
-            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(Type.int(32), 0), "rhs_bool")
+            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(lhs.type, 0), "lhs_bool")
+            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(rhs.type, 0), "rhs_bool")
             result = self.builder.and_(lhs_bool, rhs_bool, "and_expr")
         elif binaryExpr.op == "or":
-            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(Type.int(32), 0), "lhs_bool")
-            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(Type.int(32), 0), "rhs_bool")
+            lhs_bool = self.builder.icmp(ICMP_NE, lhs, Constant.int(lhs.type, 0), "lhs_bool")
+            rhs_bool = self.builder.icmp(ICMP_NE, rhs, Constant.int(rhs.type, 0), "rhs_bool")
             result = self.builder.or_(lhs_bool, rhs_bool, "or_expr")
         else:
             print("no such operand {0}".format(binaryExpr.op))
@@ -232,7 +258,7 @@ class LLVMGenerator(object):
         # implement if_block
         self.builder.position_at_end(if_block)
         result = self.exprStatLLVM(ifStat.expr)
-        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "if_bool")
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(result.type, 0), "if_bool")
         if len(ifBranches) == 0:
             self.builder.cbranch(result, then_block, end_block)
         else:
@@ -241,7 +267,8 @@ class LLVMGenerator(object):
         # implement then_block
         self.builder.position_at_end(then_block)
         self.statsLLVM(func, ifStat.stats)
-        self.builder.branch(end_block)
+        if then_block.terminator == None:
+            self.builder.branch(end_block)
         
         # implement else_block 
         while len(ifBranches) > 0:
@@ -249,7 +276,7 @@ class LLVMGenerator(object):
             if len(ifBranches) > 1:
                 self.builder.position_at_end(ifBranch[0])
                 result = self.exprStatLLVM(ifBranch[2].expr)
-                result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "if_bool")
+                result = self.builder.icmp(ICMP_NE, result, Constant.int(result.type, 0), "if_bool")
                 if ifBranches[1][0] == None:
                     self.builder.cbranch(result, ifBranch[1], ifBranches[1][1])
                 else:
@@ -257,7 +284,8 @@ class LLVMGenerator(object):
                 
             self.builder.position_at_end(ifBranch[1])
             self.statsLLVM(func, ifBranch[2].stats)
-            self.builder.branch(end_block)
+            if ifBranch[1].terminator == None:
+                self.builder.branch(end_block)
             ifBranches = ifBranches[1:]
 
         self.builder.position_at_end(end_block)
@@ -271,7 +299,7 @@ class LLVMGenerator(object):
         self.builder.branch(while_block)
         self.builder.position_at_end(while_block)
         result = self.exprStatLLVM(whileStat.expr)
-        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "while_bool")
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(result.type, 0), "while_bool")
         self.builder.cbranch(result, body_block, end_block)
 
         self.builder.position_at_end(body_block)
@@ -293,7 +321,7 @@ class LLVMGenerator(object):
 
         self.builder.position_at_end(until_block)
         result = self.exprStatLLVM(repeatStat.expr)
-        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "repeat_bool")
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(result.type, 0), "repeat_bool")
         self.builder.cbranch(result, end_block, repeat_block)
 
         self.builder.position_at_end(end_block)

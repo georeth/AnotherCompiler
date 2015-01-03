@@ -76,6 +76,8 @@ class IntKind(Kind):
 IntKind.kind = IntKind()
 
 class BoolKind(IntKind):
+    def __init__(self):
+        self.llvm_type = Type.int(1)
     def __str__(self):
         return 'boolean'
 
@@ -425,7 +427,7 @@ class BoolLiteral(Literal):
     def __init__(self, value):
         super().__init__(BoolKind.kind)
         self.value = value
-        self.llvm_type = Constant.int(Type.int(32), value)
+        self.llvm_type = Constant.int(Type.int(1), value)
 
 class YesLiteral(BoolLiteral):
     def __init__(self):
