@@ -232,6 +232,7 @@ class LLVMGenerator(object):
         # implement if_block
         self.builder.position_at_end(if_block)
         result = self.exprStatLLVM(ifStat.expr)
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "if_bool")
         if len(ifBranches) == 0:
             self.builder.cbranch(result, then_block, end_block)
         else:
@@ -248,6 +249,7 @@ class LLVMGenerator(object):
             if len(ifBranches) > 1:
                 self.builder.position_at_end(ifBranch[0])
                 result = self.exprStatLLVM(ifBranch[2].expr)
+                result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "if_bool")
                 if ifBranches[1][0] == None:
                     self.builder.cbranch(result, ifBranch[1], ifBranches[1][1])
                 else:
@@ -269,6 +271,7 @@ class LLVMGenerator(object):
         self.builder.branch(while_block)
         self.builder.position_at_end(while_block)
         result = self.exprStatLLVM(whileStat.expr)
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "while_bool")
         self.builder.cbranch(result, body_block, end_block)
 
         self.builder.position_at_end(body_block)
@@ -290,6 +293,7 @@ class LLVMGenerator(object):
 
         self.builder.position_at_end(until_block)
         result = self.exprStatLLVM(repeatStat.expr)
+        result = self.builder.icmp(ICMP_NE, result, Constant.int(Type.int(32), 0), "repeat_bool")
         self.builder.cbranch(result, end_block, repeat_block)
 
         self.builder.position_at_end(end_block)
