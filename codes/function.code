@@ -18,21 +18,20 @@ program example()
   // 函数结束
   end function isodd;
 
-  // ackerman 函数
-  function ackerman(m, n)
-    var m is integer;
+  // fib 函数
+  function fib(n)
     var n is integer;
     return integer;
   is
   begin
-    if m == 0 then
-      return n + 1;
-    elif m > 0 and n == 0 then
-      return ackerman(m - 1, 1);
+    if n == 0 then
+      return 0;
+    elif n == 1 or n == 2 then
+      return 1;
     else
-      return ackerman(m - 1, ackerman(m, n - 1));
+      return fib(n-1) + fib(n-2);
     end if
-  end function ackerman;
+  end function fib;
 
   function sum(n)
     var n is integer;
@@ -43,32 +42,28 @@ program example()
   begin
     i := -0;
     s := +0;
-    while i < n do
-      s := s + i;
-      i := i + 1;
-    end while
+//    while i <= n do
+//      s := s + i;
+//      i := i + 1;
+//    end while
     
-    if not i == -1 then
-      i := -1;
-    end if
-
-    i := -0;
-    s := +0;
     repeat
       s := s + i;
       i := i + 1;
-    until i == n;
+    until i > n;
 
     return s;
   end function sum;
 // 主程序的声明
 is
   var p is integer;
-  var q is integer;
+  var i is integer;
 // 主程序
 begin
-  p := ackerman(3, 4);
-  if isodd(4) then
-    print 3;
-  end if
+  i := 0;
+  print sum(100);
+  while i < 10 do
+    print fib(i);
+    i := i + 1;
+  end while
 end

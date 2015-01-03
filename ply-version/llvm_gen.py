@@ -1,24 +1,5 @@
-from llvm.ee import *
 from llvm.core import *
-from llvm.passes import *
 from syntax_tree import *
-
-class Symbol(object):
-    def getVal(self, builder):
-        pass
-    def getAddr(self):
-        pass
-
-class IntType(Symbol):
-    def __init__(self, builder, name):
-        self.name = name
-        self.var = builder.alloca(Type.int(32), name)
-    def getVal(self, builder):
-        return builder.load(self.var, self.name)
-
-    def getAddr(self):
-        return self.var
-
 
 class LLVMGenerator(object):
     def __init__(self):
@@ -29,19 +10,25 @@ class LLVMGenerator(object):
 
     def progLLVM(self, progNode):
         self.llvm_module = Module.new(progNode.name)
+    # enter the prog scope
         self.var_stack.append({})
-        
+
+    # declare the print function
         print_type = Type.function(Type.int(32), [Type.pointer(Type.int(8)),], True)
         self.print_int = self.llvm_module.add_function(print_type, "printf")
+    # prepare the format string
         format_str_data = Constant.stringz("%d\n")
         format_array = self.llvm_module.add_global_variable(format_str_data.type, "format_str")
         format_array.initializer = format_str_data
         format_array.global_constant = True
         self.format_str = format_array.gep([Constant.int(Type.int(32), 0), Constant.int(Type.int(32), 0)])
-
+    
+    # implement the code
         self.declLLVM(progNode.decls)
         self.progImplLLVM(progNode.impl)
         print(self.llvm_module)
+    # exit the prog scope
+        self.var_stack.pop()
 
     def declLLVM(self, declNode):
         for name, decl in declNode.items():
@@ -61,11 +48,10 @@ class LLVMGenerator(object):
         
         entry = func.append_basic_block('entry')
         self.return_block = func.append_basic_block('return')
-        self.builder = Builder.new(entry)
-        self.builder.position_at_end(entry)
     # enter the function scope
         self.var_stack.append(dict(self.var_stack[-1]))
         
+        self.builder = Builder.new(entry)
     # create argument allocas
         if return_type != Type.void():
             self.ret_val = self.builder.alloca(return_type, None, 'ret_val')
@@ -77,9 +63,11 @@ class LLVMGenerator(object):
 
     # implement the function node
         self.funcImplLLVM(func, funcNode.impl)
-        
+    
+    # implement the return basic block
         if(self.builder.basic_block.terminator == None):
             self.builder.branch(self.return_block)
+        
         self.builder.position_at_end(self.return_block)
         if return_type != Type.void():
             ret_val = self.builder.load(self.ret_val, 'ret_val')
@@ -103,7 +91,8 @@ class LLVMGenerator(object):
                 self.assignStatLLVM(func, stat)
             elif isinstance(stat, ReturnStat):
                 self.returnStatLLVM(func, stat)
-                return
+                return # ret belong to block terminator
+                # one basic block only have on terminator
             elif isinstance(stat, PrintStat):
                 self.printStatLLVM(func, stat)
             elif isinstance(stat, ExprStat):
@@ -117,7 +106,7 @@ class LLVMGenerator(object):
             elif isinstance(stat, ForeachStat):
                 self.foreachStatLLVM(func, stat)
             else:
-                print(type(stat))
+                print("unsupported stats:{0}".format(type(stat)))
                 raise Exception()
 
     def assignStatLLVM(self, func, assignStat):
@@ -175,6 +164,7 @@ class LLVMGenerator(object):
     def binaryExprLLVM(self, binaryExpr):
         lhs = self.exprStatLLVM(binaryExpr.lhs)
         rhs = self.exprStatLLVM(binaryExpr.rhs)
+        
         if binaryExpr.op == "+":
             result = self.builder.add(lhs, rhs, "add_expr")
         elif binaryExpr.op == "-":
