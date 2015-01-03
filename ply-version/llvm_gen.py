@@ -107,8 +107,11 @@ class LLVMGenerator(object):
             raise Exception()
 
     def returnStatLLVM(self, func, returnStat):
-        result = self.exprStatLLVM(returnStat.expr)
-        self.builder.ret(result)
+        if returnStat.expr != None:
+            result = self.exprStatLLVM(returnStat.expr)
+            self.builder.ret(result)
+        else:
+            self.builder.ret_void()
 
     def printStatLLVM(self, func, printStat):
         return
@@ -189,7 +192,9 @@ class LLVMGenerator(object):
         return Constant.int(Type.int(32), 1)
 
     def callExprLLVM(self, callExpr):
-        return Constant.int(Type.int(32), 1)
+        callee = self.llvm_module.get_function_named(callExpr.expr.name)
+        arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
+        return self.builder.call(callee, arg_exprs, 'call_' + callExpr.expr.name)
 
     def methodExprLLVM(self, methodEpxr):
         return Constant.int(Type.int(32), 1)
