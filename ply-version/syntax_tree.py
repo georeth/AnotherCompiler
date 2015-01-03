@@ -85,7 +85,8 @@ class ArrayKind(Kind):
     def __init__(self, size, kind):
         self.size = size
         self.kind = kind
-        self.llvm_type = Type.array(kind.llvm_type, size)
+        if isinstance(kind, Kind):
+            self.llvm_type = Type.array(kind.llvm_type, size)
     def __str__(self):
         return str(self.kind) + '[' + str(self.size) + ']'
 
@@ -94,6 +95,16 @@ class ArrayKind(Kind):
         if kind != self.kind:
             self = ArrayKind(self.size, kind)
         return self
+
+    def __eq__(self, other):
+        if not isinstance(other, ArrayKind): return False
+        return self.size == other.size and self.kind == other.kind
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash((size, kind,))
 
 class FuncKind(Kind):
     def __init__(self, arg_kinds, ret):
@@ -111,11 +122,20 @@ class FuncKind(Kind):
 
     def _visit(self, visitor):
         arg_kinds = self._visit_list(self.arg_kinds, visitor, Node._is_kind_ref)
-        print(list(map(str, arg_kinds)))
         ret = self.ret._visit_kind_ref(visitor)
         if kind != self.kind or ret != self.ret:
             self = FuncKind(arg_kinds, ret)
         return self
+
+    def __eq__(self, other):
+        if not isinstance(other, FuncKind): return False
+        return self.ret == other.ret and self.arg_kinds == other.arg_kinds
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hast((ret, tuple(self.arg_kinds),))
 
 class Klass(Kind):
     def __init__(self, base, vars, methods, name=None):

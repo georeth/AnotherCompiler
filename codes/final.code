@@ -110,7 +110,7 @@ begin
   print q.f(4);
   p.v := 3;
   print p.f(3);
-  multy();
+  multy(233);
   print ackerman(3, 4);
   if isodd(3) then
     print 3;

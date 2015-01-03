@@ -87,6 +87,33 @@ class KindResolvingVisitor(NodeVisitor):
 
         return node
 
+class NotCallableException(Exception):
+    def __init__(self, expr):
+        self.expr = expr
+        super().__init__(
+                'Expression {0} <{1}> is not callable'.format(
+                expr, expr.kind))
+
+class CallArgCountException(Exception):
+    def __init__(self, expr, expected, actual):
+        self.expr = expr
+        self.expected = expected
+        self.actual = actual
+        super().__init__(
+                '{0} takes exactly {1} argument(s) ({2} given)'.format(
+                expr, expected, actual))
+
+class CallKindException(Exception):
+    def __init__(self, expr, index, expected, actual):
+        self.expr = expr
+        self.index = index
+        self.expected = expected
+        self.actual = actual
+        super().__init__('''
+                No matching call to {0} {1}.
+                Cannot convert {4} to {3} for Argument {2}.
+            '''.format(expr, expr.kind, index, expected, actual))
+
 class VarResolvingVisitor(NodeVisitor):
     def __init__(self):
         self.var_stack = []
@@ -106,21 +133,17 @@ class VarResolvingVisitor(NodeVisitor):
     def enter(self, node):
         if isinstance(node, Program):
             self.var_stack.append({})
-            print('+' + str(len(self.var_stack)) + str(node))
             for name, decl in node.decls.items():
                 if isinstance(decl, FuncDecl):
                     self.var_stack[-1][name] = decl
         elif isinstance(node, FuncDecl):
             self.var_stack.append(dict(self.var_stack[-1]))
-            print('+' + str(len(self.var_stack)) + str(node))
         elif isinstance(node, Impl):
             self.var_stack.append(dict(self.var_stack[-1]))
-            print('+' + str(len(self.var_stack)) + str(node))
         elif isinstance(node, Klass):
             self.var_stack.append(dict(self.var_stack[-1]))
             self.klass_scope = self.var_stack[-1]
             self.klass = node
-            print('+' + str(len(self.var_stack)) + str(node))
             if node.base:
                 self._add_members(node.base)
             self._add_members(node)
@@ -135,30 +158,35 @@ class VarResolvingVisitor(NodeVisitor):
 
     def leave(self, node):
         if isinstance(node, Program):
-            print('-' + str(len(self.var_stack)) + str(node))
             self.var_stack.pop()
             self.node_scope = {}
         elif isinstance(node, Impl):
-            print('-' + str(len(self.var_stack)) + str(node))
             self.var_stack.pop()
         elif isinstance(node, Klass):
-            print('-' + str(len(self.var_stack)) + str(node))
             self.var_stack.pop()
             self.klass = None
         elif isinstance(node, FuncDecl):
-            print('-' + str(len(self.var_stack)) + str(node))
             self.var_stack.pop()
         elif isinstance(node, VarDecl):
             self.var_stack[-1][node.name] = node
         elif isinstance(node, DotExpr):
             klass = node.expr.kind
-            print(klass.name + '::' + node.member)
             node.kind = klass.vars.get(node.member)
             if node.kind is None:
                 method = klass.methods[node.member]
                 # Replace method retrieval with explicit MethodExpr.
                 return MethodExpr(klass, method)
         elif isinstance(node, CallExpr):
+            if not isinstance(node.expr.kind, FuncKind):
+                raise NotCallableException(node.expr)
+            arg_kinds = node.expr.kind.arg_kinds
+            arg_len = len(arg_kinds)
+            if len(node.args) != arg_len:
+                raise CallArgCountException(node.expr, arg_len, len(node.args))
+            for i in range(arg_len):
+                if node.args[i].kind != arg_kinds[i]:
+                    raise CallKindException(node.expr, i, arg_kinds[i],
+                            node.args[i].kind)
             node.kind = node.expr.kind.ret
         elif isinstance(node, BracketExpr):
             node.kind = node.expr.kind.kind
