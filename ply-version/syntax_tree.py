@@ -107,9 +107,9 @@ class ArrayKind(Kind):
         return hash((size, kind,))
 
 class FuncKind(Kind):
-    def __init__(self, arg_kinds, ret):
-        self.arg_kinds = arg_kinds
+    def __init__(self, ret, arg_kinds):
         self.ret = ret
+        self.arg_kinds = arg_kinds
 
     def arg_llvm_type(self):
         return tuple(map(lambda kind: kind.llvm_type, self.arg_kinds))
@@ -118,13 +118,12 @@ class FuncKind(Kind):
         arg_kinds_str = ', '.join(map(str, self.arg_kinds))
         ret_str = str(self.ret) if self.ret else ''
         return 'function<' + ret_str + '(' + arg_kinds_str + ')>'
-        self.ret = resolve(self.ret)
 
     def _visit(self, visitor):
-        arg_kinds = self._visit_list(self.arg_kinds, visitor, Node._is_kind_ref)
         ret = self.ret._visit_kind_ref(visitor)
+        arg_kinds = self._visit_list(self.arg_kinds, visitor, Node._is_kind_ref)
         if kind != self.kind or ret != self.ret:
-            self = FuncKind(arg_kinds, ret)
+            self = FuncKind(ret, arg_kinds)
         return self
 
     def __eq__(self, other):
@@ -188,7 +187,7 @@ class FuncDecl(Node):
         self.ret = ret
         self.impl = impl
         arg_kinds = list(map(lambda decl: decl.kind, self.args.decl_list))
-        self.kind = FuncKind(arg_kinds, ret)
+        self.kind = FuncKind(ret, arg_kinds)
 
     def __str__(self):
         return self.node_type() + ": " + self.name

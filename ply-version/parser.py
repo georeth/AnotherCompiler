@@ -162,8 +162,7 @@ def p_bool_factor(p):
         p[0] = UnaryExpr("not", p[2])
 
 def p_bool_atom(p):
-    """ bool_atom : bool_literal
-                  | arith_expr
+    """ bool_atom : arith_expr
                   | arith_expr rel_op arith_expr """
     if len(p) == 2:
         p[0] = p[1]
@@ -228,6 +227,7 @@ def p_arith_factor(p):
 def p_arith_atom(p):
     """
     arith_atom : num_literal
+               | bool_literal
                | variable_ref
                | P_L_PARA expr P_R_PARA
                | IDENT pass_value_list

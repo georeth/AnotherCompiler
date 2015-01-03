@@ -20,7 +20,7 @@ class KindResolvingVisitor(NodeVisitor):
         self.kind_stack = []
         self.klass = None
         self.klass_of = {}
-    
+
     def resolve_kind(self, name):
         kind = self.kind_stack[-1].get(name)
         if kind is None:
@@ -91,7 +91,7 @@ class NotCallableException(Exception):
     def __init__(self, expr):
         self.expr = expr
         super().__init__(
-                'Expression {0} <{1}> is not callable'.format(
+                'Expression {0} <{1}> is not callable.'.format(
                 expr, expr.kind))
 
 class CallArgCountException(Exception):
@@ -100,7 +100,7 @@ class CallArgCountException(Exception):
         self.expected = expected
         self.actual = actual
         super().__init__(
-                '{0} takes exactly {1} argument(s) ({2} given)'.format(
+                '{0} takes exactly {1} argument(s) ({2} given).'.format(
                 expr, expected, actual))
 
 class CallKindException(Exception):
@@ -109,15 +109,65 @@ class CallKindException(Exception):
         self.index = index
         self.expected = expected
         self.actual = actual
-        super().__init__('''
-                No matching call to {0} {1}.
-                Cannot convert {4} to {3} for Argument {2}.
-            '''.format(expr, expr.kind, index, expected, actual))
+        super().__init__((
+                'No matching call to {0} {1}.\n' +
+                '\tCannot convert {4} to {3} for Argument {2}.'
+            ).format(expr, expr.kind, index, expected, actual))
+
+class NotScriptableException(Exception):
+    def __init__(self, expr):
+        self.expr = expr
+        super().__init__(
+                'Expression {0} <{1}> is not scriptable.'.format(
+                expr, expr.kind))
+
+class IndexKindException(Exception):
+    def __init__(self, expr):
+        self.expr = expr
+        super().__init__(
+                'Array index {0} must be integer, not {1}'.format(
+                expr, expr.kind))
+
+class OperatorOverloadException(Exception):
+    def __init__(self, op, args):
+        self.op = op
+        self.args = args
+        super().__init__(
+                'No matching operator {0} found for types {1}'.format(
+                    op, ', '.join(map(lambda a: str(a.kind), args))))
 
 class VarResolvingVisitor(NodeVisitor):
     def __init__(self):
         self.var_stack = []
-    
+
+        int__int_int = FuncKind(IntKind.kind, [IntKind.kind, IntKind.kind])
+        bool__int_int = FuncKind(BoolKind.kind, [IntKind.kind, IntKind.kind])
+        bool__bool_bool = FuncKind(BoolKind.kind,
+                [BoolKind.kind, BoolKind.kind])
+
+        unary_operators = {
+                '+': [FuncKind(IntKind.kind, [IntKind.kind])],
+                '-': [FuncKind(IntKind.kind, [IntKind.kind])],
+                'not': [FuncKind(BoolKind.kind, [BoolKind.kind])],
+        }
+        binary_operators = {
+                '+': [int__int_int],
+                '-': [int__int_int],
+                '*': [int__int_int],
+                '/': [int__int_int],
+                '%': [int__int_int],
+                '==': [bool__int_int, bool__bool_bool],
+                '!=': [bool__int_int, bool__bool_bool],
+                '<': [bool__int_int],
+                '<=': [bool__int_int],
+                '>': [bool__int_int],
+                '>=': [bool__int_int],
+                'and': [bool__bool_bool],
+                'or': [bool__bool_bool],
+        }
+
+        self.operator_overloads = [{}, unary_operators, binary_operators]
+
     def resolve_var(self, name):
         var = self.var_stack[-1].get(name)
         if var is None:
@@ -129,6 +179,23 @@ class VarResolvingVisitor(NodeVisitor):
             self.var_stack[-1][name] = 'class var'
         for name, decl in klass.methods.items():
             self.var_stack[-1][name] = decl
+
+    def resolve_operator(self, op, args):
+        count = len(args)
+        if count > len(self.operator_overloads):
+            raise Exception("No operator defined for {0} args!".format(count))
+        overloads = self.operator_overloads[count].get(op)
+        if overloads:
+            for func in overloads:
+                match = True
+                for i in range(count):
+                    if args[i].kind != func.arg_kinds[i]:
+                        match = False
+                        break
+                if match:
+                    return func.ret
+
+        raise OperatorOverloadException(op, args)
 
     def enter(self, node):
         if isinstance(node, Program):
@@ -189,9 +256,15 @@ class VarResolvingVisitor(NodeVisitor):
                             node.args[i].kind)
             node.kind = node.expr.kind.ret
         elif isinstance(node, BracketExpr):
+            if not isinstance(node.expr.kind, ArrayKind):
+                raise NotScriptableException(node.expr)
+            if node.index.kind != IntKind.kind:
+                raise IndexKindException(node.index)
             node.kind = node.expr.kind.kind
         elif isinstance(node, BinaryExpr):
-            node.kind = IntKind.kind
+            node.kind = self.resolve_operator(node.op, [node.lhs, node.rhs])
+        elif isinstance(node, UnaryExpr):
+            node.kind = self.resolve_operator(node.op, [node.expr])
 
         return node
 
