@@ -502,10 +502,10 @@ class ReturnStat(SimpleStat):
         return "return " + str(self.expr) + ";"
 
     def _visit(self, visitor):
-        expr = self.expr.visit(visitor)
-
-        if expr != self.expr:
-            self = ReturnStat(expr)
+        if self.expr is not None:
+            expr = self.expr.visit(visitor)
+            if expr != self.expr:
+                self = ReturnStat(expr)
 
         return self
 
