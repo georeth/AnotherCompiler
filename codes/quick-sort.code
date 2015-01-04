@@ -70,8 +70,10 @@ begin
     arr[29] := 92;
 
     quicksort(arr, 0, 30);
-    foreach i in arr do
-        print i;
-    end foreach
+    print arr[0];
+    print arr[1];
+//    foreach i in arr do
+//        print i;
+//    end foreach
 
 end

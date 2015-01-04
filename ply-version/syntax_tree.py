@@ -70,6 +70,12 @@ class IntKind(Kind):
     def llvm_type(self):
         return Type.int(32)
 
+    def llvm_pass_type(self):
+        return Type.int(32)
+
+    def llvm_ref_type(self):
+        return 'value'
+
     def __str__(self):
         return 'integer'
 
@@ -78,6 +84,13 @@ IntKind.kind = IntKind()
 class BoolKind(IntKind):
     def llvm_type(self):
         return Type.int(1)
+
+    def llvm_pass_type(self):
+        return Type.int(1)
+
+    def llvm_ref_type(self):
+        return 'value'
+
     def __str__(self):
         return 'boolean'
 
@@ -90,6 +103,12 @@ class ArrayKind(Kind):
     
     def llvm_type(self):
         return Type.array(self.kind.llvm_type(), self.size)
+
+    def llvm_pass_type(self):
+        return Type.pointer(self.llvm_type())
+
+    def llvm_ref_type(self):
+        return 'pointer'
 
     def __str__(self):
         return str(self.kind) + '[' + str(self.size) + ']'
@@ -115,8 +134,8 @@ class FuncKind(Kind):
         self.ret = ret
         self.arg_kinds = arg_kinds
 
-    def arg_llvm_type(self):
-        return tuple(map(lambda kind: kind.llvm_type(), self.arg_kinds))
+    def args_llvm_type(self):
+        return tuple(map(lambda kind: kind.llvm_pass_type(), self.arg_kinds))
 
     def __str__(self):
         arg_kinds_str = ', '.join(map(str, self.arg_kinds))
@@ -154,6 +173,12 @@ class Klass(Kind):
 
     def llvm_type(self):
         return Type.struct(self.llvm_type_list(), self.name)
+
+    def llvm_pass_type(self):
+        return Type.pointer(self.llvm_type())
+    
+    def llvm_ref_type(self):
+        return 'pointer'    
 
     def __str__(self):
         return "class " + self.name

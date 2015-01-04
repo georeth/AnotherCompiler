@@ -2,15 +2,29 @@ program example()
   type line is array of 10 integer;
   // 使用二维数组
   type grid is array of 10 line;
+
+  function print_array(a, n)
+    var a is line;
+    var n is integer;
+  is
+    var i is integer;
+  begin
+    i := 0;
+    while i < n do
+        print a[i];
+        i := i + 1;
+    end while
+    a[0] := 10;
+  end function print_array;
 is
   var a is line;
-  var b is grid;
+  var c is grid;
 // 主程序
 begin
   a[0] := 1;
-  a[2] := 2;
+  a[1] := 2;
   print a[0];
-
-  b[0][0] := 1;
-  print b[0][0];
+  print a[1];
+  print_array(a, 2);
+  print a[0];
 end
