@@ -165,14 +165,15 @@ class Klass(Kind):
         self.vars = vars
         self.methods = methods
         self.name = name
-    
+        self.type_list = None
+
     def llvm_type_list(self):
-        type_list = self.base.llvm_type_list() if self.base else [] 
-        type_list = type_list + list(map(lambda var: var[1].kind.llvm_type(), self.vars.items()))
-        return type_list
+        if self.type_list == None:
+            self.type_list = list(map(lambda var: (var[0], var[1].kind.llvm_type()), self.vars.items()))
+        return self.type_list
 
     def llvm_type(self):
-        return Type.struct(self.llvm_type_list(), self.name)
+        return Type.struct(list(map(lambda var: var[1], self.llvm_type_list())), self.name)
 
     def llvm_pass_type(self):
         return Type.pointer(self.llvm_type())

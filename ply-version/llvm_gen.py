@@ -37,34 +37,53 @@ class LLVMGenerator(object):
             if isinstance(decl, FuncDecl):
                 self.funcLLVM(decl)
             elif isinstance(decl, KindDecl):
-                continue
+                self.kindLLVM(decl)
     
     def declLLVM(self, declNode):
         for name, decl in declNode.items():
             if isinstance(decl, FuncDecl):
                 self.funcDeclLLVM(decl)
             elif isinstance(decl, KindDecl):
-                continue
+                self.kindDeclLLVM(decl)            
+   
+    def kindDeclLLVM(self, kindNode):
+        if isinstance(kindNode.kind, Klass):
+            self.classDeclLLVM(kindNode.kind)
     
-    def ClassLLVM(self, classDecl):
-        return
-    
-    def funcDeclLLVM(self, funcNode):
-        # declare the function
+    def kindLLVM(self, kindNode):
+        if isinstance(kindNode.kind, Klass):
+            self.classLLVM(kindNode.kind)
+
+    def classLLVM(self, classDecl):
+        for name, decl in classDecl.methods.items():
+            self.funcLLVM(decl, classDecl.name + "::")
+
+    def classDeclLLVM(self, classDecl):
+        member_dict = {}
+        type_list = classDecl.llvm_type_list()
+        for i in range(0, len(type_list)):
+            member_dict[type_list[i][0]] = i
+        self.kind_stack[-1][classDecl.name] = member_dict 
+
+        for name, decl in classDecl.methods.items():
+            self.funcDeclLLVM(decl, classDecl.name + "::")
+
+    def funcDeclLLVM(self, funcNode, className=""):
+    # declare the function
         if(funcNode.kind.ret == None):
             return_type = Type.void()
         else:
             return_type = funcNode.kind.ret.llvm_type()
         func_type = Type.function(return_type, funcNode.kind.args_llvm_type())
-        func = Function.new(self.llvm_module, func_type, funcNode.name)
+        func = Function.new(self.llvm_module, func_type, className + funcNode.name)
 
-    def funcLLVM(self, funcNode):
+    def funcLLVM(self, funcNode, className=""):
         if(funcNode.kind.ret == None):
             return_type = Type.void()
         else:
             return_type = funcNode.kind.ret.llvm_type()
 
-        func = self.llvm_module.get_function_named(funcNode.name)  
+        func = self.llvm_module.get_function_named(className + funcNode.name)  
         entry = func.append_basic_block('entry')
         self.return_block = func.append_basic_block('return')
     # enter the function scope
@@ -104,7 +123,8 @@ class LLVMGenerator(object):
             alloca = self.builder.alloca(varDecl.kind.llvm_type(), None, name)
             if varDecl.kind.llvm_ref_type() == 'pointer':
                 ptr_ref = self.builder.alloca(Type.pointer(varDecl.kind.llvm_type()), None, varDecl.name)
-                self.builder.store(alloca, ptr_ref)
+                print(ptr_ref)
+                print(self.builder.store(alloca, ptr_ref))
                 alloca = ptr_ref
 
             self.var_stack[-1][varDecl.name] = (alloca, varDecl.kind.llvm_ref_type())
@@ -153,8 +173,13 @@ class LLVMGenerator(object):
             array_ptr = self.getExprAddr(addrExpr.expr)
             result = self.builder.gep(array_ptr, [Constant.int(Type.int(32), 0), self.exprStatLLVM(addrExpr.index)], 'array_gep')
             return result
+        elif isinstance(addrExpr, DotExpr):
+            class_name = addrExpr.expr.kind.name
+            index = self.kind_stack[-1][class_name][addrExpr.member]
+            class_ptr = self.getExprAddr(addrExpr.expr)
+            result = self.builder.gep(class_ptr, [Constant.int(Type.int(32), 0), Constant.int(Type.int(32), index)], 'class_member_gep')
+            return result
         else:
-            return None
             raise Exception()
 
 
@@ -242,7 +267,9 @@ class LLVMGenerator(object):
         return result;
 
     def dotExprLLVM(self, dotExpr):
-        return Constant.int(Type.int(32), 1)
+        member_ptr = self.getExprAddr(dotExpr)
+        result = self.builder.load(member_ptr, 'member_extract')
+        return result
 
     def bracketExprLLVM(self, bracketExpr):
         array_idx = self.getExprAddr(bracketExpr)
@@ -251,12 +278,16 @@ class LLVMGenerator(object):
     
     def callExprLLVM(self, callExpr):
         if isinstance(callExpr.expr, MethodExpr):
-            return Constant.int(Type.int(32), 1)
+            method_name = callExpr.expr.klass.name + "::" + callExpr.expr.method.name
+            callee = self.llvm_module.get_function_named(method_name)
         else:
             callee = self.llvm_module.get_function_named(callExpr.expr.name)
-            arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
-            result = self.builder.call(callee, arg_exprs)
-            return result
+        arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
+        for ins in arg_exprs:
+            print (ins);
+        result = self.builder.call(callee, arg_exprs)
+        return result
+
     def methodExprLLVM(self, methodEpxr):
         return Constant.int(Type.int(32), 1)
 

@@ -91,6 +91,7 @@ program example()
   // 类可以被继承
   type b is class extends a
     // 函数可以被覆盖
+    var x is integer;
     function f(x)
       var x is integer;
       return integer;

@@ -14,7 +14,7 @@ program example()
   end class;
 
   // 类可以被继承
-  type b is class extends c
+  type b is class extends b
     // 函数可以被覆盖
     function f(x)
       var x is integer;

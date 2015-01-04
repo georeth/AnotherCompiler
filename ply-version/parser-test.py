@@ -11,7 +11,7 @@ def process(content, filename):
     prog = parser.parse(content)
     if prog:
         prog = analyze(prog)
-#        prog = prog.visit(PrintVisitor())
+        prog = prog.visit(PrintVisitor())
         llvm_gen = LLVMGenerator()
         llvm_gen.progLLVM(prog)
 
