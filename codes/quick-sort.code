@@ -70,14 +70,13 @@ begin
     arr[29] := 92;
 
     quicksort(arr, 0, 30);
-    i := 0;
-    while i < 30 do
-        print arr[i];
-        i := i + 1;
-    end while
-//    print arr[1];
-//    foreach i in arr do
-//        print i;
-//    end foreach
+//    i := 0;
+//    while i < 30 do
+//        print arr[i];
+//        i := i + 1;
+//    end while
+   foreach i in arr do
+     print i;
+   end foreach
 
 end

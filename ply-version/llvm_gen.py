@@ -35,21 +35,21 @@ class LLVMGenerator(object):
     def declImplLLVM(self, declNode):
         for name, decl in declNode.items():
             if isinstance(decl, FuncDecl):
-                self.funcImpLLVM(decl)
+                self.funcLLVM(decl)
             elif isinstance(decl, KindDecl):
                 continue
     
     def declLLVM(self, declNode):
         for name, decl in declNode.items():
             if isinstance(decl, FuncDecl):
-                self.funcLLVM(decl)
+                self.funcDeclLLVM(decl)
             elif isinstance(decl, KindDecl):
                 continue
     
     def ClassLLVM(self, classDecl):
         return
     
-    def funcLLVM(self, funcNode):
+    def funcDeclLLVM(self, funcNode):
         # declare the function
         if(funcNode.kind.ret == None):
             return_type = Type.void()
@@ -58,7 +58,7 @@ class LLVMGenerator(object):
         func_type = Type.function(return_type, funcNode.kind.args_llvm_type())
         func = Function.new(self.llvm_module, func_type, funcNode.name)
 
-    def funcImpLLVM(self, funcNode):
+    def funcLLVM(self, funcNode):
         if(funcNode.kind.ret == None):
             return_type = Type.void()
         else:
@@ -107,7 +107,7 @@ class LLVMGenerator(object):
                 self.builder.store(alloca, ptr_ref)
                 alloca = ptr_ref
 
-            self.var_stack[-1][varDecl.name] = (alloca, varDecl.kind.llvm_ref_type()) 
+            self.var_stack[-1][varDecl.name] = (alloca, varDecl.kind.llvm_ref_type())
     
     def statsLLVM(self, func, stats):
         for stat in stats:
@@ -363,7 +363,38 @@ class LLVMGenerator(object):
         self.builder.position_at_end(end_block)
 
     def foreachStatLLVM(self, func, foreachStat):
-        return
+    #build blocks
+        foreach_block = func.append_basic_block("foreach")
+        loop_block = func.append_basic_block("loop")
+        end_block = func.append_basic_block("end_block")
+    #implement
+        temp_addr = self.builder.alloca(Type.int(32), None, "index_temp")
+        self.builder.store(Constant.int(Type.int(32), 0), temp_addr)
+        
+        self.builder.branch(foreach_block)
+        self.builder.position_at_end(foreach_block)
+        temp_value = self.builder.load(temp_addr, "index_temp")
+        if isinstance(foreachStat.expr.var.kind, ArrayKind):
+            array_size = Constant.int(Type.int(32), foreachStat.expr.var.kind.size)
+        else:
+            print('only array support foreach statement')
+            raise Exception()
+        loop_expr = self.builder.icmp(ICMP_SLT, temp_value, array_size, 'cmp_result')
+        self.builder.cbranch(loop_expr, loop_block, end_block)
+
+        self.builder.position_at_end(loop_block)
+        iter_var_addr = self.getExprAddr(foreachStat.var)
+        array_ptr = self.getExprAddr(foreachStat.expr)
+        array_gep = self.builder.gep(array_ptr, [Constant.int(Type.int(32), 0), temp_value], 'array_gep')
+        array_value = self.builder.load(array_gep, 'array_value')
+        self.builder.store(array_value, iter_var_addr)
+        
+        self.statsLLVM(func, foreachStat.stats)
+        add_result = self.builder.add(temp_value, Constant.int(Type.int(32), 1),'add_result')
+        self.builder.store(add_result, temp_addr)
+        self.builder.branch(foreach_block)
+
+        self.builder.position_at_end(end_block)
 
     def progImplLLVM(self, implNode):
         funct_type = Type.function(Type.void(), tuple())
