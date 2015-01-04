@@ -12,7 +12,7 @@ class LLVMGenerator(object):
         self.llvm_module = Module.new(progNode.name)
     # enter the prog scope
         self.var_stack.append({})
-
+        self.kind_stack.append({})
     # declare the print function
         print_type = Type.function(Type.int(32), [Type.pointer(Type.int(8)),], True)
         self.print_int = self.llvm_module.add_function(print_type, "printf")
@@ -29,7 +29,7 @@ class LLVMGenerator(object):
         print(self.llvm_module)
     # exit the prog scope
         self.var_stack.pop()
-
+        self.kind_stack.pop()
     def declLLVM(self, declNode):
         for name, decl in declNode.items():
             if(isinstance(decl, FuncDecl)):
@@ -37,12 +37,15 @@ class LLVMGenerator(object):
             elif(isinstance(decl, KindDecl)):
                 continue
 
+    def ClassLLVM(self, classDecl):
+        return
+
     def funcLLVM(self, funcNode):
     # declare the function
         if(funcNode.kind.ret == None):
             return_type = Type.void()
         else:
-            return_type = funcNode.kind.ret.llvm_type
+            return_type = funcNode.kind.ret.llvm_type()
         func_type = Type.function(return_type, funcNode.kind.arg_llvm_type())
         func = Function.new(self.llvm_module, func_type, funcNode.name)
         
@@ -57,7 +60,7 @@ class LLVMGenerator(object):
             self.ret_val = self.builder.alloca(return_type, None, 'ret_val')
         for arg, arg_decl in zip(func.args, funcNode.args.decl_list):
             arg.name = arg_decl.name
-            alloca = self.builder.alloca(arg_decl.kind.llvm_type, None, arg_decl.name)
+            alloca = self.builder.alloca(arg_decl.kind.llvm_type(), None, arg_decl.name)
             self.builder.store(arg, alloca)
             self.var_stack[-1][arg_decl.name] = alloca
 
@@ -83,7 +86,7 @@ class LLVMGenerator(object):
     
     def varDeclsLLVM(self, func, varDecls):
         for name, varDecl in varDecls.items():
-            self.var_stack[-1][varDecl.name] = self.builder.alloca(varDecl.kind.llvm_type, None, name)
+            self.var_stack[-1][varDecl.name] = self.builder.alloca(varDecl.kind.llvm_type(), None, name)
 
     def statsLLVM(self, func, stats):
         for stat in stats:
@@ -110,16 +113,23 @@ class LLVMGenerator(object):
                 raise Exception()
 
     def assignStatLLVM(self, func, assignStat):
-        if isinstance(assignStat.lhs, VarRef):
-            if assignStat.lhs.name in self.var_stack[-1]:
-                var_addr = self.var_stack[-1][assignStat.lhs.name]
+        var_addr = self.getExprAddr(assignStat.lhs)
+        result = self.exprStatLLVM(assignStat.rhs)
+        self.builder.store(result, var_addr)
+
+    def getExprAddr(self, addrExpr):
+        if isinstance(addrExpr, VarRef):
+            if addrExpr.name in self.var_stack[-1]:
+                return self.var_stack[-1][addrExpr.name]
             else:
-                print("No such variable {0}".format(assignStat.lhs.name))
-            result = self.exprStatLLVM(assignStat.rhs)
-            self.builder.store(result, var_addr)
+                print("No such variable {0}".format(addrExpr.name))
+        elif isinstance(addrExpr, BracketExpr):
+            array_ptr = self.getExprAddr(addrExpr.expr)
+            return self.builder.gep(array_ptr, [Constant.int(Type.int(32), 0), self.exprStatLLVM(addrExpr.index)], 'array_gep')
         else:
-            print("invalid assignment lhs")
+            return None
             raise Exception()
+
 
     def returnStatLLVM(self, func, returnStat):
         if returnStat.expr != None:
@@ -139,13 +149,13 @@ class LLVMGenerator(object):
         elif isinstance(exprStat, DotExpr):
             return self.dotExprLLVM(exprStat)
         elif isinstance(exprStat, BracketExpr):
-            return self.bracketExpr(exprStat)
+            return self.bracketExprLLVM(exprStat)
         elif isinstance(exprStat, CallExpr):
             return self.callExprLLVM(exprStat)
         elif isinstance(exprStat, MethodExpr):
             return self.methodExprLLVM(exprStat)
         elif isinstance(exprStat, (BoolLiteral, NumLiteral)):
-            return exprStat.llvm_type
+            return exprStat.llvm_value
         elif isinstance(exprStat, VarRef):
             return self.varRefLLVM(exprStat)
     
@@ -205,12 +215,16 @@ class LLVMGenerator(object):
         return Constant.int(Type.int(32), 1)
 
     def bracketExprLLVM(self, bracketExpr):
-        return Constant.int(Type.int(32), 1)
+        array_idx = self.getExprAddr(bracketExpr)
+        return self.builder.load(array_idx, 'array_extract')
 
     def callExprLLVM(self, callExpr):
-        callee = self.llvm_module.get_function_named(callExpr.expr.name)
-        arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
-        return self.builder.call(callee, arg_exprs, 'call_' + callExpr.expr.name)
+        if not isinstance(callExpr.expr, MethodExpr):
+            callee = self.llvm_module.get_function_named(callExpr.expr.name)
+            arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
+            return self.builder.call(callee, arg_exprs, 'call_' + callExpr.expr.name)
+        else:
+            return Constant.int(Type.int(32), 1)
 
     def methodExprLLVM(self, methodEpxr):
         return Constant.int(Type.int(32), 1)
@@ -222,7 +236,6 @@ class LLVMGenerator(object):
         else:
             print("not variable named: {0}".format(varRef.name))
             raise Exception()
-
         return result
 
     def ifStatLLVM(self, func, ifStat):

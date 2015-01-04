@@ -67,8 +67,8 @@ class NumKind(Kind):
 NumKind.kind = NumKind()
 
 class IntKind(Kind):
-    def __init__(self):
-        self.llvm_type = Type.int(32)
+    def llvm_type(self):
+        return Type.int(32)
 
     def __str__(self):
         return 'integer'
@@ -76,8 +76,8 @@ class IntKind(Kind):
 IntKind.kind = IntKind()
 
 class BoolKind(IntKind):
-    def __init__(self):
-        self.llvm_type = Type.int(1)
+    def llvm_type(self):
+        return Type.int(1)
     def __str__(self):
         return 'boolean'
 
@@ -87,8 +87,10 @@ class ArrayKind(Kind):
     def __init__(self, size, kind):
         self.size = size
         self.kind = kind
-        if isinstance(kind, Kind):
-            self.llvm_type = Type.array(kind.llvm_type, size)
+    
+    def llvm_type(self):
+        return Type.array(self.kind.llvm_type(), self.size)
+
     def __str__(self):
         return str(self.kind) + '[' + str(self.size) + ']'
 
@@ -114,7 +116,7 @@ class FuncKind(Kind):
         self.arg_kinds = arg_kinds
 
     def arg_llvm_type(self):
-        return tuple(map(lambda kind: kind.llvm_type, self.arg_kinds))
+        return tuple(map(lambda kind: kind.llvm_type(), self.arg_kinds))
 
     def __str__(self):
         arg_kinds_str = ', '.join(map(str, self.arg_kinds))
@@ -144,6 +146,14 @@ class Klass(Kind):
         self.vars = vars
         self.methods = methods
         self.name = name
+    
+    def llvm_type_list(self):
+        type_list = self.base.llvm_type_list() if self.base else [] 
+        type_list = type_list + list(map(lambda var: var[1].kind.llvm_type(), self.vars.items()))
+        return type_list
+
+    def llvm_type(self):
+        return Type.struct(self.llvm_type_list(), self.name)
 
     def __str__(self):
         return "class " + self.name
@@ -427,7 +437,7 @@ class BoolLiteral(Literal):
     def __init__(self, value):
         super().__init__(BoolKind.kind)
         self.value = value
-        self.llvm_type = Constant.int(Type.int(1), value)
+        self.llvm_value = Constant.int(Type.int(1), value)
 
 class YesLiteral(BoolLiteral):
     def __init__(self):
@@ -447,7 +457,7 @@ class NumLiteral(Literal):
     def __init__(self, value):
         super().__init__(IntKind.kind)
         self.value = value
-        self.llvm_type = Constant.int(Type.int(32), value)
+        self.llvm_value = Constant.int(Type.int(32), value)
 
     def __str__(self):
         return str(self.value)

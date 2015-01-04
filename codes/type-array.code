@@ -3,8 +3,14 @@ program example()
   // 使用二维数组
   type grid is array of 10 line;
 is
-  var p is a;
-  var q is b;
+  var a is line;
+  var b is grid;
 // 主程序
 begin
+  a[0] := 1;
+  a[2] := 2;
+  print a[0];
+
+  b[0][0] := 1;
+  print b[0][0];
 end
