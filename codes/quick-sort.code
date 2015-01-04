@@ -17,7 +17,7 @@ program example()
         pivot := arr[from];
         left := from + 1;
         right := to - 1;
-        while left < to do
+        while left <= right do
             if arr[left] < pivot then
                 left := left + 1;
             else
@@ -28,8 +28,8 @@ program example()
             end if
         end while
         temp := arr[from];
-        arr[from] := arr[right];
-        arr[right] := temp;
+        arr[from] := arr[left - 1];
+        arr[left - 1] := temp;
 
         quicksort(arr, from, right);
         quicksort(arr, left, to);
