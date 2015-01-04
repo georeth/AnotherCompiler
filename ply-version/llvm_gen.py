@@ -25,31 +25,46 @@ class LLVMGenerator(object):
     
     # implement the code
         self.declLLVM(progNode.decls)
+        self.declImplLLVM(progNode.decls)
         self.progImplLLVM(progNode.impl)
         print(self.llvm_module)
     # exit the prog scope
         self.var_stack.pop()
         self.kind_stack.pop()
     
+    def declImplLLVM(self, declNode):
+        for name, decl in declNode.items():
+            if isinstance(decl, FuncDecl):
+                self.funcImpLLVM(decl)
+            elif isinstance(decl, KindDecl):
+                continue
+    
     def declLLVM(self, declNode):
         for name, decl in declNode.items():
-            if(isinstance(decl, FuncDecl)):
+            if isinstance(decl, FuncDecl):
                 self.funcLLVM(decl)
-            elif(isinstance(decl, KindDecl)):
+            elif isinstance(decl, KindDecl):
                 continue
-
+    
     def ClassLLVM(self, classDecl):
         return
-
+    
     def funcLLVM(self, funcNode):
-    # declare the function
+        # declare the function
         if(funcNode.kind.ret == None):
             return_type = Type.void()
         else:
             return_type = funcNode.kind.ret.llvm_type()
         func_type = Type.function(return_type, funcNode.kind.args_llvm_type())
         func = Function.new(self.llvm_module, func_type, funcNode.name)
-        
+
+    def funcImpLLVM(self, funcNode):
+        if(funcNode.kind.ret == None):
+            return_type = Type.void()
+        else:
+            return_type = funcNode.kind.ret.llvm_type()
+
+        func = self.llvm_module.get_function_named(funcNode.name)  
         entry = func.append_basic_block('entry')
         self.return_block = func.append_basic_block('return')
     # enter the function scope
