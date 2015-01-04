@@ -57,6 +57,7 @@ program example()
       // 无论何种条件，进入循环体
       repeat
         g[i][j] := i * j;
+        j := j + 1;
       // 如果 j >= 10 成立则退出循环，否则回到循环开始
       until j >= 10;
       i := i + 1;
@@ -107,9 +108,10 @@ is
   var q is b;
 // 主程序
 begin
+  p.v := 3;
+  q.v := 3;
   print p.f(5);
   print q.f(4);
-  p.v := 3;
   print p.f(3);
   multy(233);
   print ackerman(3, 4);

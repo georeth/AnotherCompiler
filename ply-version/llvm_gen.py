@@ -61,6 +61,7 @@ class LLVMGenerator(object):
     def classDeclLLVM(self, classDecl):
         member_dict = {}
         type_list = classDecl.llvm_type_list()
+
         for i in range(0, len(type_list)):
             member_dict[type_list[i][0]] = i
         self.kind_stack[-1][classDecl.name] = member_dict 
@@ -123,8 +124,7 @@ class LLVMGenerator(object):
             alloca = self.builder.alloca(varDecl.kind.llvm_type(), None, name)
             if varDecl.kind.llvm_ref_type() == 'pointer':
                 ptr_ref = self.builder.alloca(Type.pointer(varDecl.kind.llvm_type()), None, varDecl.name)
-                print(ptr_ref)
-                print(self.builder.store(alloca, ptr_ref))
+                self.builder.store(alloca, ptr_ref)
                 alloca = ptr_ref
 
             self.var_stack[-1][varDecl.name] = (alloca, varDecl.kind.llvm_ref_type())
@@ -283,8 +283,6 @@ class LLVMGenerator(object):
         else:
             callee = self.llvm_module.get_function_named(callExpr.expr.name)
         arg_exprs = [ self.exprStatLLVM(arg) for arg in callExpr.args ]
-        for ins in arg_exprs:
-            print (ins);
         result = self.builder.call(callee, arg_exprs)
         return result
 

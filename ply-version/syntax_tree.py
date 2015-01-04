@@ -166,17 +166,22 @@ class Klass(Kind):
         self.methods = methods
         self.name = name
         self.type_list = None
-
+        self.struct_ty = None
+        self.struct_ptr = None
     def llvm_type_list(self):
-        if self.type_list == None:
+        if self.type_list is None:
             self.type_list = list(map(lambda var: (var[0], var[1].kind.llvm_type()), self.vars.items()))
         return self.type_list
 
     def llvm_type(self):
-        return Type.struct(list(map(lambda var: var[1], self.llvm_type_list())), self.name)
+        if self.struct_ty is None:
+            self.struct_ty = Type.struct(list(map(lambda var: var[1], self.llvm_type_list())), self.name)
+        return self.struct_ty
 
     def llvm_pass_type(self):
-        return Type.pointer(self.llvm_type())
+        if self.struct_ptr is None:
+            self.struct_ptr = Type.pointer(self.llvm_type())
+        return self.struct_ptr
     
     def llvm_ref_type(self):
         return 'pointer'    
