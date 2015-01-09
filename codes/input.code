@@ -1,0 +1,15 @@
+program example()
+  type line is array of 100 integer;
+is
+  var i is integer;
+  var n is integer;
+  var a is line;
+begin
+  input n;
+  foreach i in range(n) do
+    input a[i];
+  end foreach
+  foreach i in range(n) do
+    print a[i];
+  end foreach
+end

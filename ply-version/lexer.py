@@ -22,6 +22,7 @@ reserved = {
     "until" : "K_UNTIL",  
     "foreach" : "K_FOREACH",
     "print" : "K_PRINT",  
+    "input" : "K_INPUT",  
     "of" : "K_OF",     
     "array" : "K_ARRAY",  
     "class" : "K_CLASS",  

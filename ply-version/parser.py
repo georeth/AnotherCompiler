@@ -301,6 +301,7 @@ def p_statement(p):
               | foreach_stat
               | return_stat
               | print_stat
+              | input_stat
               | expr P_SEMI
     """
     if len(p) == 2:
@@ -381,6 +382,10 @@ def p_return_stat(p):
 def p_print_stat(p):
     """ print_stat : K_PRINT expr P_SEMI """
     p[0] = PrintStat(p[2])
+
+def p_input_stat(p):
+    """ input_stat : K_INPUT pass_values P_SEMI """
+    p[0] = InputStat(p[2])
 
 def p_error(tok):
     print("syntax error {0}".format(tok))
