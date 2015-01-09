@@ -112,10 +112,10 @@ begin
   q.v := 3;
   print p.f(5);
   print q.f(4);
-  print p.f(3);
+  print q.f(3);
   multy(233);
   print ackerman(3, 4);
   if isodd(3) then
-    print 3;
+    print 1;
   end if
 end

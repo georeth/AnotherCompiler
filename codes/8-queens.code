@@ -1,0 +1,73 @@
+program eight_queens()
+  type intarr is array of 9 integer;
+  function check_pos_valid(arr, loop, value)
+    var arr is intarr;
+    var loop is integer;
+    var value is integer;
+    return integer;
+  is 
+    var index is integer;
+    var data is integer;
+  begin
+    index := 0;
+    while index < loop do
+      data := arr[index];
+      if value == data then
+        return 0;
+      end if
+
+      if (index + data) == (loop + value) then
+        return 0;
+      end if
+      
+      if (index - data) == (loop - value) then
+        return 0;
+      end if
+
+      index := index + 1;
+    end while
+
+    return 1;
+
+  end function check_pos_valid;
+
+  function eight_queen(arr, index)
+    var arr is intarr;
+    var index is integer;
+  is
+    var loop is integer;
+  begin
+    loop := 0;
+    while loop < 8 do
+      if check_pos_valid(arr, index, loop) then
+        arr[index] := loop;
+        
+        if index == 7 then
+          arr[8] := arr[8] + 1;
+          arr[index] := 0;
+          return;
+        end if
+
+        eight_queen(arr, index + 1);
+        arr[index] := 0;
+      end if
+      loop := loop + 1;
+    end while
+  end function eight_queen;
+
+is
+  var arr is intarr;
+  var i is integer;
+begin
+  arr[0] := 0;
+  arr[1] := 0;
+  arr[2] := 0;
+  arr[3] := 0;
+  arr[4] := 0;
+  arr[5] := 0;
+  arr[6] := 0;
+  arr[7] := 0;
+  arr[8] := 0;
+  eight_queen(arr, 0);
+  print arr[8];
+end

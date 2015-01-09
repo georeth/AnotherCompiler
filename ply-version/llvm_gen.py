@@ -103,7 +103,7 @@ class LLVMGenerator(object):
         self.funcImplLLVM(func, funcNode.impl)
     
     # implement the return basic block
-        if(self.builder.basic_block.terminator == None):
+        if self.builder.basic_block.terminator == None:
             self.builder.branch(self.return_block)
         
         self.builder.position_at_end(self.return_block)
@@ -332,8 +332,7 @@ class LLVMGenerator(object):
         # implement then_block
         self.builder.position_at_end(then_block)
         self.statsLLVM(func, ifStat.stats)
-        if then_block.terminator == None:
-            self.builder.branch(end_block)
+        self.builder.branch(end_block)
         
         # implement else_block 
         while len(ifBranches) > 0:
@@ -349,8 +348,7 @@ class LLVMGenerator(object):
                 
             self.builder.position_at_end(ifBranch[1])
             self.statsLLVM(func, ifBranch[2].stats)
-            if ifBranch[1].terminator == None:
-                self.builder.branch(end_block)
+            self.builder.branch(end_block)
             ifBranches = ifBranches[1:]
 
         self.builder.position_at_end(end_block)
