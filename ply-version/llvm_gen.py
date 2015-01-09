@@ -204,7 +204,8 @@ class LLVMGenerator(object):
         print_int = self.builder.call(self.print_int, [self.format_str, self.exprStatLLVM(printStat.expr)], "print_int")
 
     def inputStatLLVM(self, func, inputStat):
-        input_int = self.builder.call(self.input_int, [self.read_format_str, self.getExprAddr(inputStat.exprs[0])], "input_int")
+        for i, expr in enumerate(inputStat.exprs):
+            self.builder.call(self.input_int, [self.read_format_str, self.getExprAddr(expr)], "input_int" + str(i))
 
     def exprStatLLVM(self, expr):
         if isinstance(expr, UnaryExpr):
