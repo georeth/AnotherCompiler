@@ -561,6 +561,22 @@ class PrintStat(SimpleStat):
 
         return self
 
+class InputStat(SimpleStat):
+    def __init__(self, exprs):
+        self.exprs = exprs
+
+    def __str__(self):
+        exprs_str = ', '.join(map(str, self.exprs))
+        return "input " + exprs_str + ";"
+
+    def _visit(self, visitor):
+        exprs = self._visit_list(self.exprs, visitor)
+
+        if exprs is not self.exprs:
+            self = InputStat(exprs)
+
+        return self
+
 class ExprStat(SimpleStat):
     def __init__(self, expr):
         self.expr = expr
