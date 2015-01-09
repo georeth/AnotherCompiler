@@ -15,14 +15,22 @@ class LLVMGenerator(object):
         self.kind_stack.append({})
     # declare the print function
         print_type = Type.function(Type.int(32), [Type.pointer(Type.int(8)),], True)
+        scanf_type = Type.function(Type.int(32), [Type.pointer(Type.int(8)),], True)
         self.print_int = self.llvm_module.add_function(print_type, "printf")
+        self.input_int = self.llvm_module.add_function(scanf_type, "scanf")
     # prepare the format string
         format_str_data = Constant.stringz("%d\n")
         format_array = self.llvm_module.add_global_variable(format_str_data.type, "format_str")
         format_array.initializer = format_str_data
         format_array.global_constant = True
         self.format_str = format_array.gep([Constant.int(Type.int(32), 0), Constant.int(Type.int(32), 0)])
-    
+     
+        read_format_str_data = Constant.stringz("%d")
+        read_format_array = self.llvm_module.add_global_variable(read_format_str_data.type, "read_format_str")
+        read_format_array.initializer = read_format_str_data
+        read_format_array.global_constant = True
+        self.read_format_str = read_format_array.gep([Constant.int(Type.int(32), 0), Constant.int(Type.int(32), 0)])
+   
     # implement the code
         self.declLLVM(progNode.decls)
         self.declImplLLVM(progNode.decls)
@@ -140,6 +148,8 @@ class LLVMGenerator(object):
                 # one basic block only have on terminator
             elif isinstance(stat, PrintStat):
                 self.printStatLLVM(func, stat)
+            elif isinstance(stat, InputStat):
+                self.inputStatLLVM(func, stat)
             elif isinstance(stat, ExprStat):
                 self.exprStatLLVM(stat.expr)
             elif isinstance(stat, IfStat):
@@ -192,6 +202,9 @@ class LLVMGenerator(object):
 
     def printStatLLVM(self, func, printStat):
         print_int = self.builder.call(self.print_int, [self.format_str, self.exprStatLLVM(printStat.expr)], "print_int")
+
+    def inputStatLLVM(self, func, inputStat):
+        input_int = self.builder.call(self.input_int, [self.read_format_str, self.getExprAddr(inputStat.exprs[0])], "input_int")
 
     def exprStatLLVM(self, expr):
         if isinstance(expr, UnaryExpr):
