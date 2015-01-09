@@ -33,7 +33,12 @@ def mylang_compile(content, filename, mode='compile'):
     prog = parser.parse(content)
     if not prog: return
     if mode == 'analyze' or mode == 'compile':
-        prog = analyze(prog)
+        try:
+            prog = analyze(prog)
+        except MyLangAnalyzeException as e:
+            print('Analyze error: ', end='')
+            print(e)
+            return
     if mode != 'compile':
         prog.visit(PrintVisitor())
     else:

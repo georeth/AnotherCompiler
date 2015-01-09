@@ -173,9 +173,9 @@ def p_bool_literal(p):
     """ bool_literal : L_YES
                      | L_NO """
     if p[1] == "yes":
-        p[0] = YesLiteral()
+        p[0] = BoolLiteral.yes
     else:
-        p[0] = NoLiteral()
+        p[0] = BoolLiteral.no
 
 def p_arith_expr(p):
     """ arith_expr : arith_term_signed

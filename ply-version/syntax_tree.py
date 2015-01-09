@@ -461,13 +461,17 @@ class MethodExpr(Expr):
     def __str__(self):
         return self.klass.name + '::' + self.method.name
 
-class Literal(Expr):
+class ConstantExpr(Expr):
+    def __init__(self, kind, value):
+        super().__init__(kind)
+        self.value = value
+
+class Literal(ConstantExpr):
     pass
 
 class BoolLiteral(Literal):
     def __init__(self, value):
-        super().__init__(BoolKind.kind)
-        self.value = value
+        super().__init__(BoolKind.kind, value)
         self.llvm_value = Constant.int(Type.int(1), value)
 
 class YesLiteral(BoolLiteral):
@@ -484,10 +488,12 @@ class NoLiteral(BoolLiteral):
     def __str__(self):
         return "no"
 
+BoolLiteral.yes = YesLiteral()
+BoolLiteral.no = NoLiteral()
+
 class NumLiteral(Literal):
     def __init__(self, value):
-        super().__init__(IntKind.kind)
-        self.value = value
+        super().__init__(IntKind.kind, value)
         self.llvm_value = Constant.int(Type.int(32), value)
 
     def __str__(self):

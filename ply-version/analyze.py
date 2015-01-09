@@ -5,12 +5,15 @@ from lexer import tokens
 from syntax_tree import *
 from syntax_tree_print import *
 
-class UnknownKindException(Exception):
+class MyLangAnalyzeException(Exception):
+    pass
+
+class UnknownKindException(MyLangAnalyzeException):
     def __init__(self, name):
         self.name = name
         super().__init__('Unknown kind "{0}"!'.format(name))
 
-class UndefinedVarException(Exception):
+class UndefinedVarException(MyLangAnalyzeException):
     def __init__(self, name):
         self.name = name
         super().__init__('Undefined variable "{0}"!'.format(name))
@@ -87,14 +90,14 @@ class KindResolvingVisitor(NodeVisitor):
 
         return node
 
-class NotCallableException(Exception):
+class NotCallableException(MyLangAnalyzeException):
     def __init__(self, expr):
         self.expr = expr
         super().__init__(
                 'Expression {0} <{1}> is not callable.'.format(
                 expr, expr.kind))
 
-class CallArgCountException(Exception):
+class CallArgCountException(MyLangAnalyzeException):
     def __init__(self, expr, expected, actual):
         self.expr = expr
         self.expected = expected
@@ -103,7 +106,7 @@ class CallArgCountException(Exception):
                 '{0} takes exactly {1} argument(s) ({2} given).'.format(
                 expr, expected, actual))
 
-class CallKindException(Exception):
+class CallKindException(MyLangAnalyzeException):
     def __init__(self, expr, index, expected, actual):
         self.expr = expr
         self.index = index
@@ -114,21 +117,21 @@ class CallKindException(Exception):
                 '\tCannot convert {4} to {3} for Argument {2}.'
             ).format(expr, expr.kind, index, expected, actual))
 
-class NotScriptableException(Exception):
+class NotScriptableException(MyLangAnalyzeException):
     def __init__(self, expr):
         self.expr = expr
         super().__init__(
                 'Expression {0} <{1}> is not scriptable.'.format(
                 expr, expr.kind))
 
-class IndexKindException(Exception):
+class IndexKindException(MyLangAnalyzeException):
     def __init__(self, expr):
         self.expr = expr
         super().__init__(
                 'Array index {0} must be integer, not {1}'.format(
                 expr, expr.kind))
 
-class OperatorOverloadException(Exception):
+class OperatorOverloadException(MyLangAnalyzeException):
     def __init__(self, op, args):
         self.op = op
         self.args = args
@@ -183,7 +186,8 @@ class VarResolvingVisitor(NodeVisitor):
     def resolve_operator(self, op, args):
         count = len(args)
         if count > len(self.operator_overloads):
-            raise Exception("No operator defined for {0} args!".format(count))
+            raise MyLangAnalyzeException(
+                    "No operator defined for {0} args!".format(count))
         overloads = self.operator_overloads[count].get(op)
         if overloads:
             for func in overloads:
@@ -220,6 +224,22 @@ class VarResolvingVisitor(NodeVisitor):
                 # Replace instance variable reference with explicit DotExpr.
                 return DotExpr(VarRef('class', self.klass), node.name)
             node.kind = node.var.kind
+        elif isinstance(node, ForeachStat):
+            # foreach i in range(10) do
+            if (isinstance(node.expr, CallExpr) and
+                isinstance(node.expr.expr, VarRef) and
+                node.expr.expr.name == 'range'):
+                args = node.expr.args
+                if len(args) == 1:
+                    from_expr = NumLiteral(0)
+                    to_expr = args[0]
+                else:
+                    from_expr, to_expr = args
+                init_st = AssignStat(node.var, from_expr)
+                inc = BinaryExpr(node.var, '+', NumLiteral(1))
+                stats = node.stats + [AssignStat(node.var, inc)]
+                while_st = WhileStat(BinaryExpr(node.var, '<', to_expr), stats)
+                return RepeatStat(BoolLiteral.yes, [init_st, while_st])
 
         return node
 

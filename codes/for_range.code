@@ -1,0 +1,11 @@
+program example()
+is
+  var i is integer;
+begin
+  foreach i in range(10) do
+    print i;
+  end foreach
+  foreach i in range(100, 103) do
+    print i;
+  end foreach
+end
